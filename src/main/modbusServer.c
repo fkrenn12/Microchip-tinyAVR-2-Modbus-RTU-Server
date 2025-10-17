@@ -1,4 +1,19 @@
 #include "modbusServer.h"
+// C
+uint16_t modbus_read_crc16_le(const uint8_t* frame, uint16_t frameSize) {
+    // CRC is stored little-endian: low byte at frame[size-2], high byte at frame[size-1]
+    // Caller must ensure frameSize >= 2.
+    return (uint16_t)((uint16_t)frame[(uint16_t)(frameSize - 2u)] | ((uint16_t)frame[(uint16_t)(frameSize - 1u)] << 8));
+}
+
+void modbus_write_crc16_le(uint8_t* frame, uint16_t totalSize) {
+    // totalSize includes the 2 CRC bytes at the end.
+    // Writes CRC in little-endian order per Modbus RTU.
+    const uint16_t crc = modbus_crc16(frame, (uint16_t)(totalSize - 2u));
+    frame[(uint16_t)(totalSize - 2u)] = (uint8_t)(crc & 0xFFu);   // low byte
+    frame[(uint16_t)(totalSize - 1u)] = (uint8_t)(crc >> 8);      // high byte
+}
+
 
 // function definitions
 void exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, uint8_t  exception);
@@ -10,7 +25,8 @@ void modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t broadc
     // Expected request size for Write Single Coil (Function 0x05):
     // ID(1) + FUNC(1) + ADDRESS(2) + VALUE(2) + CRC(2) = 8 bytes
     if (frameSize != 8u) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_COIL, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_COIL, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Parse request fields
@@ -18,7 +34,8 @@ void modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t broadc
 
     // Address check
     if (outputAddress >= (uint16_t)numOfCoils) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_COIL, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_COIL, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
 
     // Modbus spec: 0xFF00 = ON, 0x0000 = OFF (other values illegal)
@@ -29,18 +46,17 @@ void modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t broadc
     const uint16_t MODBUS_COIL_OFF_VALUE = 0x0000u;
 
     if (rawValue != MODBUS_COIL_ON_VALUE && rawValue != MODBUS_COIL_OFF_VALUE) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_COIL, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_COIL, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Write coil (1 for ON, 0 for OFF)
     coils[outputAddress] = (uint8_t)(rawValue == MODBUS_COIL_ON_VALUE ? 1u : 0u);
 
     // Response: echo request (ID..VALUE) + CRC
-    const uint16_t crc16 = modbus_crc16(frame, 6u);
-    frame[6] = (uint8_t)(crc16 & 0xFFu); // CRC low
-    frame[7] = (uint8_t)(crc16 >> 8);    // CRC high
-
-    if (!broadcastFlag) sendPacket(frame, 8u);
+    const uint8_t totalResponseSize = 8u; // fixed size
+    modbus_write_crc16_le(frame, totalResponseSize);
+    if (!broadcastFlag) sendPacket(frame, totalResponseSize);
     return 0u;
 }
 #endif
@@ -56,7 +72,8 @@ void modbus_read_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag
     */
     // Basic size check for request
     if (frameSize != 8u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Parse request
@@ -65,15 +82,18 @@ void modbus_read_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag
 
     // Quantity must be >= 1. Spec allows up to 2000; we enforce our table bounds below.
     if (quantity == 0u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Address bounds against coils table
     if (startingAddress >= numOfCoils) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_READ_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
     if ((uint32_t)startingAddress + (uint32_t)quantity > (uint32_t)numOfCoils) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Compute response payload size in bytes (ceil(quantity / 8))
@@ -103,9 +123,7 @@ void modbus_read_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag
 
     // Finalize CRC and send
     const uint8_t responseSize = (uint8_t)(3u + byteCount + 2u);
-    const uint16_t crc = modbus_crc16(frame, (uint16_t)(responseSize - 2u));
-    frame[responseSize - 2] = (uint8_t)(crc & 0xFFu); // CRC low
-    frame[responseSize - 1] = (uint8_t)(crc >> 8);    // CRC high
+    modbus_write_crc16_le(frame, responseSize);
 
     sendPacket(frame, responseSize);
     return 0u;
@@ -123,7 +141,8 @@ void modebus_read_inputs(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFl
 
     // Basic size check for request
     if (frameSize != 8u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_DISCRETE_INPUTS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_DISCRETE_INPUTS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Parse request
@@ -132,15 +151,18 @@ void modebus_read_inputs(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFl
 
     // Modbus limits: quantity 1..2000 (spec). We can enforce at least 1 and within our table.
     if (quantity == 0u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_DISCRETE_INPUTS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_DISCRETE_INPUTS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Address bounds against input_discretes array
     if (startingAddress >= numOfDiscreteInputs) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_DISCRETE_INPUTS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_READ_DISCRETE_INPUTS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
     if ((uint32_t)startingAddress + (uint32_t)quantity > (uint32_t)numOfDiscreteInputs) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_DISCRETE_INPUTS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_DISCRETE_INPUTS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return; 
     }
 
     // Compute response payload size in bytes (ceil(quantity / 8))
@@ -170,9 +192,7 @@ void modebus_read_inputs(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFl
 
     // Response size: ID(1) + FUNC(1) + BYTE_CNT(1) + DATA(byteCount) + CRC(2)
     const uint8_t responseSize = (uint8_t)(3u + byteCount + 2u);
-    const uint16_t crc = modbus_crc16(frame, (uint16_t)(responseSize - 2u));
-    frame[responseSize - 2] = (uint8_t)(crc & 0xFFu); // CRC low
-    frame[responseSize - 1] = (uint8_t)(crc >> 8);    // CRC high
+    modbus_write_crc16_le(frame, responseSize);
 
     sendPacket(frame, responseSize);
     return 0u;
@@ -188,28 +208,33 @@ void modbus_write_multiple_coils(uint8_t* frame, uint16_t frameSize, uint8_t bro
 
     // Quick sanity checks
     if (coilCount == 0) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return; 
     }
 
     // Check address range
     if (startCoil >= numOfCoils) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
     if ((uint32_t)startCoil + (uint32_t)coilCount > (uint32_t)numOfCoils) {
         // Would overflow the coils array
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Expected payload byte count is ceil(coilCount / 8.0)
     const uint8_t expectedByteCount = (uint8_t)((coilCount + 7u) >> 3);
     if (byteCount != expectedByteCount) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Validate total frame size: ID(1) + FUNC(1) + start(2) + count(2) + byteCount(1)
     // + data(byteCount) + CRC(2) = 9 + byteCount
     if (frameSize != (uint16_t)(9u + byteCount)) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_COILS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Write coils from packed bytes
@@ -226,11 +251,9 @@ void modbus_write_multiple_coils(uint8_t* frame, uint16_t frameSize, uint8_t bro
     }
 
     // Build response: echo first 6 bytes (ID..count) + CRC
-    const uint16_t crc16 = modbus_crc16(frame, 6);
-    frame[6] = (uint8_t)(crc16 & 0xFF);   // CRC low
-    frame[7] = (uint8_t)(crc16 >> 8);     // CRC high
-
-    if (!broadcastFlag) sendPacket(frame, 8u);
+    const uint8_t responseSize = 8u;
+    modbus_write_crc16_le(frame, responseSize);
+    if (!broadcastFlag) sendPacket(frame, responseSize);
     return 0;
 }
 #endif
@@ -245,7 +268,8 @@ void modbus_read_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t b
 
     // Strict request size
     if (frameSize != 8u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return; 
     }
 
     // Parse request
@@ -256,15 +280,18 @@ void modbus_read_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t b
 
     // Quantity must be at least 1 (spec allows up to 125)
     if (registerCount == 0u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Bounds checks with overflow-safe math
     if (startingAddress >= (uint16_t)numOfHoldingRegisters) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
     if ((uint32_t)startingAddress + (uint32_t)registerCount > (uint32_t)numOfHoldingRegisters) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Build response
@@ -284,10 +311,7 @@ void modbus_read_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t b
         frame[out++] = (uint8_t)(reg & 0xFFu);
     }
 
-    const uint16_t crc16 = modbus_crc16(frame, (uint16_t)(responseSize - 2u));
-    frame[responseSize - 2] = (uint8_t)(crc16 & 0xFFu);
-    frame[responseSize - 1] = (uint8_t)(crc16 >> 8);
-
+    modbus_write_crc16_le(frame, responseSize);
     sendPacket(frame, responseSize);
     return 0u;
 }
@@ -304,7 +328,8 @@ void modbus_read_input_registers(uint8_t* frame, uint16_t frameSize, uint8_t bro
 
     // Strict request size
     if (frameSize != 8u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_INPUT_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_INPUT_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Parse request
@@ -315,15 +340,18 @@ void modbus_read_input_registers(uint8_t* frame, uint16_t frameSize, uint8_t bro
 
     // Quantity must be at least 1 (spec allows up to 125)
     if (registerCount == 0u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_INPUT_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_INPUT_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Bounds checks with overflow-safe math against input_registers table
     if (startingAddress >= (uint16_t)numOfInputRegisters) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_INPUT_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_READ_INPUT_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
     if ((uint32_t)startingAddress + (uint32_t)registerCount > (uint32_t)numOfInputRegisters) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_INPUT_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_INPUT_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Build response: ID, FUNC, BYTE_CNT, DATA..., CRC
@@ -343,10 +371,7 @@ void modbus_read_input_registers(uint8_t* frame, uint16_t frameSize, uint8_t bro
         frame[out++] = (uint8_t)(reg & 0xFFu);
     }
 
-    const uint16_t crc16 = modbus_crc16(frame, (uint16_t)(responseSize - 2u));
-    frame[responseSize - 2] = (uint8_t)(crc16 & 0xFFu);
-    frame[responseSize - 1] = (uint8_t)(crc16 >> 8);
-
+    modbus_write_crc16_le(frame, responseSize);
     sendPacket(frame, responseSize);
     return 0u;
 }
@@ -363,7 +388,8 @@ void modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize, ui
 
     // Strict request size check
     if (frameSize != 8u) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Parse address
@@ -372,7 +398,8 @@ void modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize, ui
 
     // Address bounds check
     if (address >= (uint16_t)numOfHoldingRegisters) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
 
     // Parse value (big-endian: Hi, Lo)
@@ -383,9 +410,8 @@ void modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize, ui
     holding_registers[address] = value;
 
     // Build response: echo ID..VALUE and append CRC
-    const uint16_t crc16 = modbus_crc16(frame, 6u);
-    frame[6] = (uint8_t)(crc16 & 0xFFu); // CRC low
-    frame[7] = (uint8_t)(crc16 >> 8);    // CRC high
+    const uint8_t totalResponseSize = 8u; // fixed size
+    modbus_write_crc16_le(frame, totalResponseSize);
 
     if (!broadcastFlag) sendPacket(frame, 8u);
     return 0u;
@@ -403,7 +429,8 @@ void modbus_write_multiple_holding_registers(uint8_t* frame, uint16_t frameSize,
 
     // Minimal fixed part is 9 bytes before CRC depends on byte count; validate later precisely.
     if (frameSize < 9u) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Parse request header fields
@@ -413,27 +440,32 @@ void modbus_write_multiple_holding_registers(uint8_t* frame, uint16_t frameSize,
 
     // Spec: COUNT 1..123. Enforce >=1; upper bound effectively enforced by our table and byteCount below.
     if (registerCount == 0u) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Byte count must match exactly COUNT * 2
     const uint16_t expectedBytes = (uint16_t)(registerCount * 2u);
     if (byteCount != (uint8_t)expectedBytes) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Validate total frame size = 9 + byteCount (ID,FUNC,START(2),COUNT(2),BYTE_CNT(1),DATA(byteCount),CRC(2))
     const uint16_t expectedFrame = (uint16_t)(9u + (uint16_t)byteCount);
     if (frameSize != expectedFrame) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Address range checks
     if (startingAddress >= (uint16_t)numOfHoldingRegisters) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
     if ((uint32_t)startingAddress + (uint32_t)registerCount > (uint32_t)numOfHoldingRegisters) {
-        return exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Write registers from payload
@@ -446,10 +478,8 @@ void modbus_write_multiple_holding_registers(uint8_t* frame, uint16_t frameSize,
     }
 
     // Build response: echo ID..COUNT (first 6 bytes) + CRC
-    const uint16_t crc16 = modbus_crc16(frame, 6u);
-    frame[6] = (uint8_t)(crc16 & 0xFFu); // CRC low
-    frame[7] = (uint8_t)(crc16 >> 8);    // CRC high
-
+    const uint8_t totalResponseSize = 8u; // fixed size
+    modbus_write_crc16_le(frame, totalResponseSize);
     if (!broadcastFlag) sendPacket(frame, 8u);
     return 0u;
 }
@@ -531,7 +561,8 @@ void modbus_read_configuration(uint8_t* frame, uint16_t frameSize, uint8_t broad
 
     // Strict request size
     if (frameSize != 8u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Parse request
@@ -541,14 +572,16 @@ void modbus_read_configuration(uint8_t* frame, uint16_t frameSize, uint8_t broad
     // Quantity must be at least 1 (spec allows up to 125)
     // if (registerCount == 0u || registerCount > 2u) {
     if (registerCount == 0u) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
+        return;
     }
 
     // Bounds checks with overflow-safe math
     if (startingAddress != HOLDING_REGISTER_MODBUS_ID && 
         startingAddress != HOLDING_REGISTER_BAUDRATE && 
         startingAddress != HOLDING_REGISTER_SERVER_NAME) {
-        return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+        return;
     }
 
     uint8_t out = (uint8_t)(MODBUS_POS_FUNCTION + 2); // start of data (index 3)
@@ -590,10 +623,7 @@ void modbus_read_configuration(uint8_t* frame, uint16_t frameSize, uint8_t broad
     // Build response
     frame[MODBUS_POS_DATA] = byteCount;
     const uint8_t totalResponseSize = (uint8_t)(3u + byteCount + 2u); // ID, FUNC, BYTE_CNT, DATA, CRC
-    const uint16_t crc16 = modbus_crc16(frame, (uint16_t)(totalResponseSize - 2u));
-    frame[totalResponseSize - 2] = (uint8_t)(crc16 & 0xFFu);
-    frame[totalResponseSize - 1] = (uint8_t)(crc16 >> 8);
-
+    modbus_write_crc16_le(frame, totalResponseSize);
     sendPacket(frame, totalResponseSize);
     return 0u;
 }
@@ -604,13 +634,10 @@ void modbus_update(uint8_t* frame, uint16_t frameSize){
     // Serial1.println(frameSize);
 
     // Check frame size validity
-    if (frameSize >= UART_BUFFER_SIZE || frameSize < 4)
-        return;
+    if (frameSize >= UART_BUFFER_SIZE || frameSize < 4) return;
 
     // Check CRC
-    uint16_t received_crc = (frame[frameSize - 2]) | (frame[frameSize - 1] << 8);
-    if (modbus_crc16(frame, frameSize - 2) != received_crc)
-        return;
+    if (modbus_crc16(frame, frameSize - 2) != modbus_read_crc16_le(frame, frameSize)) return;
 
     uint8_t id = frame[MODBUS_POS_ID];
     uint8_t broadcastFlag = (id == 0);
@@ -622,14 +649,24 @@ void modbus_update(uint8_t* frame, uint16_t frameSize){
     // Serial1.println(function);
     if (configFlag){
         // Configuration commands
-        if (function == MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER){
-            modbus_write_single_configuration(frame, frameSize, 0); // it will not return because of reset
-        }
-        else if (function == MB_FUNCTION_READ_HOLDING_REGISTERS){
-            modbus_read_configuration(frame, frameSize, 0);
-        }
-        else if (function == MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS){
-            modbus_write_multiple_configuration_registers(frame, frameSize, 0);
+        switch (function) {
+            case MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER:
+                // Will not return due to MCU reset
+                modbus_write_single_configuration(frame, frameSize, 0);
+                break;
+
+            case MB_FUNCTION_READ_HOLDING_REGISTERS:
+                modbus_read_configuration(frame, frameSize, 0);
+                break;
+
+            case MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS:
+                modbus_write_multiple_configuration_registers(frame, frameSize, 0);
+                break;
+
+            default:
+                // Unknown configuration function: reply with exception (function code 0x01 per Modbus)
+                exceptionResponse(frame, function, 0 /*broadcastFlag*/, MB_EXCEPTION_ILLEGAL_FUNCTION);
+                break;
         }
         return;
     }
@@ -683,10 +720,9 @@ void exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, 
     if (!broadcastFlag) { // don't respond if its a broadcast message
         frame[1] = (function | 0x80); // set the MSB bit high, informs the master of an exception
         frame[2] = exception;
-        uint16_t crc16 = modbus_crc16(frame, 3); // ID, function + 0x80, exception code == 3 bytes
-        frame[4] = crc16 >> 8;
-        frame[3] = crc16 & 0xFF;
-        sendPacket(frame,5); // exception response is always 5 bytes ID, function + 0x80, exception code, 2 bytes crc
+        const uint8_t responseSize = 5u; // ID(1) + FUNC(1) + EXC(1) + CRC(2)
+        modbus_write_crc16_le(frame, responseSize);
+        sendPacket(frame,responseSize);
     }
     return;
 }
