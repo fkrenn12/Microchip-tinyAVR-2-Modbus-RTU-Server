@@ -2,12 +2,16 @@
 #define _MAIN_H
 
 #include "avr/io.h"
+#include <avr/interrupt.h>
+#include <avr/eeprom.h>
+#include <string.h>
+
 #include "config.h"
 #include "uart.h"
 #include "modbusServer.h"
 #include "adc.h"
 #include "pwm.h"
-
+#include "eeprom_config.h"
 
 #ifdef __cplusplus
 extern "C" {

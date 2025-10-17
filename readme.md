@@ -33,7 +33,7 @@ Review the functions here: [MODBUS specification](https://github.com/fkrenn12/Mi
 ### 🚀 Supported peripheral functionality 🚀
 ⭐ Digital Outputs (coils)  
 ⭐ Digital Inputs (discrete inputs)  
-⭐ PWM (holding registers)   
+⭐ Dual Slope PWM (holding registers)   
 ⭐ ADC (input registers)  
 
 ## Workflow
@@ -141,7 +141,7 @@ In the file `config.h`, you can define the association of the data model to the 
 | x      |        |        | RC5 | RC5     |  
 
 #### `HOLDING REGISTERS`
-The `HOLDING REGISTERS` are mapped to to PWM outputs. The PWM Frequency and duty cycle can be adjusted by writing into the corresponding registers. There are 3 PMW outputs on three dedicated pins (PB0, PB1, PB2) possible. The PWM Frequency is in Hz and the duty cycle is in percent. The range for the Frequency is 1Hz to 65535Hz and the range for the duty cycle is 0% to 100%.
+The `HOLDING REGISTERS` are mapped to to PWM outputs. The PWM Frequency and duty cycle can be adjusted by writing into the corresponding registers. There are 3 PMW outputs on three dedicated pins (PB0, PB1, PB2) possible. The PWM Frequency is in Hz and the duty cycle is in percent. The range for the Frequency is 1Hz to 65535Hz and the range for the duty cycle is 0% to 100%. The PWM signals are generated with dual slope, therefore a full bridge driver can be realized with the PWM outputs.  
 
 | Number of Pins |
 | 24 | 20 | 14 | Holding registers | Value range | Unit |

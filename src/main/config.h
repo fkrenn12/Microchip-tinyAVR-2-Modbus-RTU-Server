@@ -4,7 +4,7 @@
 #include "peripheral.h"
 
 // *** Modbus-ID ***
-#define MODBUS_ID 0 // 0:       address set by pymcuprog (eeprom) or modbus_id=254
+#define MODBUS_ID 3 // 0:       address set by pymcuprog (eeprom) or modbus_id=254
                     // 1-247:   initial unique address until reprogrammed
 
 // *** Low latency mode ***

@@ -2,10 +2,6 @@
 #include "Arduino.h"
 #endif
 #include "main.h"
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/eeprom.h>
-#include <string.h>
 
 ////////////////////////////////////////////////////////////////////////
 // GLOBAL USED VARIABLES
@@ -14,6 +10,7 @@ uint8_t frame_buffer[UART_BUFFER_SIZE];
 uint16_t frame_head = 0;
 uint8_t modbus_id = 0;
 uint32_t uart_baudrate = UART_BAUDRATE;
+
 
 #ifdef INPUT_DISCRETES
 uint16_t config_input_discretes[] = INPUT_DISCRETES; // function 2 register array
@@ -338,14 +335,7 @@ void update_input_discretes(void)
     #endif
     // configure alt uart pins    
     PORTMUX.USARTROUTEA = PORTMUX_USART1_NONE_gc | PORTMUX_USART0_ALT1_gc;
-    uint32_t b1 = (uint32_t)eeprom_read_byte((uint8_t*)(EEPROM_OFFSET_BAUDRATE + 0));
-    uint32_t b0 = (uint32_t)eeprom_read_byte((uint8_t*)(EEPROM_OFFSET_BAUDRATE + 1));
-    uart_baudrate = (b1 << 8) | (b0 << 0);
-    if (uart_baudrate == 0xFFFF){
-        uart_baudrate = UART_BAUDRATE;  // not programmed yet
-    }
-    uart_baudrate *= 100;
-    if (uart_baudrate == 0) uart_baudrate = 9600;
+    uart_baudrate = load_baudrate_from_eeprom();
     uint16_t T1_5; // 1.5 charcter time
     uint8_t lowLatency = MODBUS_LOW_LATENCY_MODE;
     if (lowLatency && uart_baudrate >= 115200){
@@ -357,14 +347,12 @@ void update_input_discretes(void)
     }
     
     // read from eeprom
-    modbus_id=eeprom_read_byte(EEPROM_OFFSET_MODBUS_ID);
-    if (modbus_id == 0xff && MODBUS_ID == 0){modbus_id=254;} // 255 not allowed -> set to 254 
-    if (modbus_id == 0xff && MODBUS_ID != 0){modbus_id=MODBUS_ID;} 
-  
     init_peripheral();
     init_adc();
     init_tcb0_us(T1_5);
     init_uart0(uart_baudrate);
+    modbus_id=load_modbus_id_from_eeprom();
+    
     sei();
 
     while (1) {

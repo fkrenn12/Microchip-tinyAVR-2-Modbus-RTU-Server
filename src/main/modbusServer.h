@@ -85,7 +85,8 @@
 #include "crc.h"
 #include "uart.h"
 #include "config.h"
-#include <avr/eeprom.h>
+// #include <avr/eeprom.h>
+#include "eeprom_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,7 +115,7 @@ extern uint16_t frame_head;
 #define MODBUS_POS_REGISTERVALUES 7
 
 // function definitions
-uint16_t modbus_update(uint8_t* frame,uint16_t frameSize);
+void modbus_update(uint8_t* frame,uint16_t frameSize);
 int8_t modbus_precheck(uint8_t* frame, uint16_t frameSize);
 uint8_t modbus_id_request(uint8_t* frame, uint16_t frameSize);
 

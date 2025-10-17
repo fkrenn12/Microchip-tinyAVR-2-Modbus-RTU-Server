@@ -1,13 +1,11 @@
 #include "modbusServer.h"
 
-uint16_t errorCount = 0;
-
 // function definitions
-uint16_t exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, uint8_t  exception);
+void exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, uint8_t  exception);
 
 
 #ifdef COILS
-uint16_t modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
+void modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
 {
     // Expected request size for Write Single Coil (Function 0x05):
     // ID(1) + FUNC(1) + ADDRESS(2) + VALUE(2) + CRC(2) = 8 bytes
@@ -48,7 +46,7 @@ uint16_t modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t br
 #endif
 
 #ifdef COILS
-uint16_t modbus_read_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
+void modbus_read_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
 {
     /*
     Read Coils (Function 0x01)
@@ -114,7 +112,7 @@ uint16_t modbus_read_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcast
 }
 #endif
 #ifdef INPUT_DISCRETES
-uint16_t modebus_read_inputs(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
+void modebus_read_inputs(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
 {
     /*
     Read Discrete Inputs (Function 0x02)
@@ -181,7 +179,7 @@ uint16_t modebus_read_inputs(uint8_t* frame, uint16_t frameSize, uint8_t broadca
 }
 #endif
 #ifdef COILS
-uint16_t modbus_write_multiple_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
+void modbus_write_multiple_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
 {
     // Parse request fields
     const uint16_t startCoil = (uint16_t)((frame[MODBUS_POS_DATA] << 8) | frame[MODBUS_POS_DATA + 1]);
@@ -237,7 +235,7 @@ uint16_t modbus_write_multiple_coils(uint8_t* frame, uint16_t frameSize, uint8_t
 }
 #endif
 #ifdef HOLDING_REGISTERS
-uint16_t modbus_read_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
+void modbus_read_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
 {
     /*
     Function 0x03: Read Holding Registers
@@ -296,7 +294,7 @@ uint16_t modbus_read_holding_registers(uint8_t* frame, uint16_t frameSize, uint8
 #endif
 
 #ifdef INPUT_REGISTERS
-uint16_t modbus_read_input_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
+void modbus_read_input_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
 {
     /*
     Function 0x04: Read Input Registers
@@ -355,7 +353,7 @@ uint16_t modbus_read_input_registers(uint8_t* frame, uint16_t frameSize, uint8_t
 #endif
 
 #ifdef HOLDING_REGISTERS
-uint16_t modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
+void modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
 {
     /*
     Function 0x06: Write Single Holding Register
@@ -395,7 +393,7 @@ uint16_t modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize
 #endif
 
 #ifdef HOLDING_REGISTERS
-uint16_t modbus_write_multiple_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
+void modbus_write_multiple_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag)
 {
     /*
     Function 0x10: Write Multiple Holding Registers
@@ -486,22 +484,31 @@ int8_t modbus_precheck(uint8_t* frame, uint16_t frameSize)
     // Return function code if all checks passed
     return (uint16_t)frame[MODBUS_POS_FUNCTION];
 }
+void modbus_write_multiple_configuration_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag){
+    // Parse request header fields
+    const uint16_t startingAddress = (uint16_t)(((uint16_t)frame[MODBUS_POS_DATA] << 8) | (uint16_t)frame[MODBUS_POS_DATA + 1]);
+    const uint16_t registerCount  = (uint16_t)(((uint16_t)frame[MODBUS_POS_DATA + 2] << 8) | (uint16_t)frame[MODBUS_POS_DATA + 3]);
+    const uint8_t  byteCount      = frame[MODBUS_POS_BYTECOUNT];
+}
 
-uint16_t write_single_configuration(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag){
+void modbus_write_single_configuration(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag){
     uint16_t address = (uint16_t)(((uint16_t)frame[MODBUS_POS_DATA] << 8) | (uint16_t)frame[MODBUS_POS_DATA + 1]);
     uint16_t value = (uint16_t)(((uint16_t)frame[MODBUS_POS_DATA + 2] << 8) | (uint16_t)frame[MODBUS_POS_DATA + 3]);
 
     if (address == HOLDING_REGISTER_MODBUS_ID){
         // Change Modbus ID write to eeprom
-        eeprom_write_byte(0,value & 0xFF); 
+        store_modbus_id_to_eeprom((uint8_t)(value & 0xFF));
+        // eeprom_write_byte(0,value & 0xFF); 
     }
     else if (address == HOLDING_REGISTER_BAUDRATE){
         // baudrate
-        uint32_t new_uart_baudrate = (uint32_t)value;
+        uint32_t new_uart_baudrate = (uint32_t)value * 100;
         // write to eeprom
-        eeprom_write_byte((uint8_t *)EEPROM_OFFSET_BAUDRATE,(uint8_t)((new_uart_baudrate >> 8) & 0xFF)); 
-        eeprom_write_byte((uint8_t *)EEPROM_OFFSET_BAUDRATE+1,(uint8_t)((new_uart_baudrate >> 0) & 0xFF)); 
+        store_baudrate_to_eeprom(new_uart_baudrate);
+        // eeprom_write_byte((uint8_t *)EEPROM_OFFSET_BAUDRATE,(uint8_t)((new_uart_baudrate >> 8) & 0xFF)); 
+        // eeprom_write_byte((uint8_t *)EEPROM_OFFSET_BAUDRATE+1,(uint8_t)((new_uart_baudrate >> 0) & 0xFF)); 
     }
+
     // Build response: echo ID..VALUE and append CRC
     const uint16_t crc16 = modbus_crc16(frame_buffer, 6u);
     frame_buffer[6] = (uint8_t)(crc16 & 0xFFu); // CRC low
@@ -512,10 +519,9 @@ uint16_t write_single_configuration(uint8_t* frame, uint16_t frameSize, uint8_t 
     cli();
     _delay_ms(10);
     asm volatile ("jmp 0");
-    return 0;
 }
 
-uint16_t read_configuration(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag){
+void modbus_read_configuration(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag){
     // Read configuration values and send response
     /*
     Function 0x03: Read Holding Registers
@@ -533,60 +539,78 @@ uint16_t read_configuration(uint8_t* frame, uint16_t frameSize, uint8_t broadcas
     const uint16_t registerCount  = (uint16_t)(((uint16_t)frame[MODBUS_POS_DATA + 2] << 8) | (uint16_t)frame[MODBUS_POS_DATA + 3]);
 
     // Quantity must be at least 1 (spec allows up to 125)
-    if (registerCount == 0u || registerCount > 2u) {
+    // if (registerCount == 0u || registerCount > 2u) {
+    if (registerCount == 0u) {
         return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
     }
 
     // Bounds checks with overflow-safe math
-    if (startingAddress != HOLDING_REGISTER_MODBUS_ID && startingAddress != HOLDING_REGISTER_BAUDRATE) {
+    if (startingAddress != HOLDING_REGISTER_MODBUS_ID && 
+        startingAddress != HOLDING_REGISTER_BAUDRATE && 
+        startingAddress != HOLDING_REGISTER_SERVER_NAME) {
         return exceptionResponse(frame, MB_FUNCTION_READ_HOLDING_REGISTERS, broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
     }
-
-    // Build response
-    const uint8_t byteCount = (uint8_t)(registerCount * 2u);
-    const uint8_t responseSize = (uint8_t)(3u + byteCount + 2u); // ID, FUNC, BYTE_CNT, DATA, CRC
-
-    frame[MODBUS_POS_FUNCTION] = MB_FUNCTION_READ_HOLDING_REGISTERS;
-    frame[MODBUS_POS_DATA]     = byteCount;
 
     uint8_t out = (uint8_t)(MODBUS_POS_FUNCTION + 2); // start of data (index 3)
     uint16_t idx = startingAddress;
     const uint16_t end = (uint16_t)(startingAddress + registerCount);
-
+    uint8_t byteCount = 0;
     while (idx < end) {
         uint16_t reg = 0;
         if (idx == HOLDING_REGISTER_MODBUS_ID){
             reg = (uint16_t)modbus_id;
+            frame[out++] = (uint8_t)(reg >> 8);
+            frame[out++] = (uint8_t)(reg & 0xFFu);
+            byteCount += 2;
         }
         else if (idx == HOLDING_REGISTER_BAUDRATE){
-            reg = uart_baudrate / 100;
+            reg = (uint16_t)(uart_baudrate / 100);
+            frame[out++] = (uint8_t)(reg >> 8);
+            frame[out++] = (uint8_t)(reg & 0xFFu);
+            byteCount += 2;
+        }
+        else if (idx ==  HOLDING_REGISTER_SERVER_NAME){
+            uint8_t server_name[MAX_SERVERNAME_LENGTH+2] = {0};
+            load_modbus_server_name_from_eeprom(server_name, MAX_SERVERNAME_LENGTH);
+            if (strlen(server_name) % 2 != 0){
+                // make even length
+                server_name[strlen(server_name)+1] = 0;
+            }
+            for (uint8_t i = 0; i < MAX_SERVERNAME_LENGTH+2; i+=2){
+                uint8_t c = server_name[i];
+                frame[out++] = server_name[i];
+                frame[out++] = server_name[i+1];
+                byteCount += 2;
+                if (c == 0) break;
+            }
         }
         idx++;
-        frame[out++] = (uint8_t)(reg >> 8);
-        frame[out++] = (uint8_t)(reg & 0xFFu);
     }
 
-    const uint16_t crc16 = modbus_crc16(frame, (uint16_t)(responseSize - 2u));
-    frame[responseSize - 2] = (uint8_t)(crc16 & 0xFFu);
-    frame[responseSize - 1] = (uint8_t)(crc16 >> 8);
+    // Build response
+    frame[MODBUS_POS_DATA] = byteCount;
+    const uint8_t totalResponseSize = (uint8_t)(3u + byteCount + 2u); // ID, FUNC, BYTE_CNT, DATA, CRC
+    const uint16_t crc16 = modbus_crc16(frame, (uint16_t)(totalResponseSize - 2u));
+    frame[totalResponseSize - 2] = (uint8_t)(crc16 & 0xFFu);
+    frame[totalResponseSize - 1] = (uint8_t)(crc16 >> 8);
 
-    sendPacket(frame, responseSize);
+    sendPacket(frame, totalResponseSize);
     return 0u;
 }
 
 
-uint16_t modbus_update(uint8_t* frame, uint16_t frameSize){
+void modbus_update(uint8_t* frame, uint16_t frameSize){
     // Serial1.print("Modbus update called with frameSize = ");
     // Serial1.println(frameSize);
 
     // Check frame size validity
     if (frameSize >= UART_BUFFER_SIZE || frameSize < 4)
-        return ++errorCount;
+        return;
 
     // Check CRC
     uint16_t received_crc = (frame[frameSize - 2]) | (frame[frameSize - 1] << 8);
     if (modbus_crc16(frame, frameSize - 2) != received_crc)
-        return ++errorCount;
+        return;
 
     uint8_t id = frame[MODBUS_POS_ID];
     uint8_t broadcastFlag = (id == 0);
@@ -599,12 +623,15 @@ uint16_t modbus_update(uint8_t* frame, uint16_t frameSize){
     if (configFlag){
         // Configuration commands
         if (function == MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER){
-            write_single_configuration(frame, frameSize, 0); // it will not return because of reset
+            modbus_write_single_configuration(frame, frameSize, 0); // it will not return because of reset
         }
-        if (function == MB_FUNCTION_READ_HOLDING_REGISTERS){
-            read_configuration(frame, frameSize, 0);
+        else if (function == MB_FUNCTION_READ_HOLDING_REGISTERS){
+            modbus_read_configuration(frame, frameSize, 0);
         }
-        return errorCount;
+        else if (function == MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS){
+            modbus_write_multiple_configuration_registers(frame, frameSize, 0);
+        }
+        return;
     }
     
     if (ackFlag || broadcastFlag) {
@@ -648,13 +675,12 @@ uint16_t modbus_update(uint8_t* frame, uint16_t frameSize){
         }
             
     }
-    return errorCount;
+    return;
 }
 
-uint16_t exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, uint8_t  exception)
+void exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, uint8_t  exception)
 {
     if (!broadcastFlag) { // don't respond if its a broadcast message
-        frame[0] = modbus_id;
         frame[1] = (function | 0x80); // set the MSB bit high, informs the master of an exception
         frame[2] = exception;
         uint16_t crc16 = modbus_crc16(frame, 3); // ID, function + 0x80, exception code == 3 bytes
@@ -662,6 +688,6 @@ uint16_t exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFl
         frame[3] = crc16 & 0xFF;
         sendPacket(frame,5); // exception response is always 5 bytes ID, function + 0x80, exception code, 2 bytes crc
     }
-    return ++errorCount;
+    return;
 }
 
