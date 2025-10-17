@@ -80,13 +80,13 @@
 */
 
 #include <inttypes.h>
-#include "modbus_exceptions.h"
-#include "modbus_functions.h"
-#include "crc.h"
-#include "uart.h"
-#include "config.h"
+#include "exceptions.h"
+#include "functions.h"
+#include "../crc.h"
+#include "../uart.h"
+#include "../config.h"
 // #include <avr/eeprom.h>
-#include "eeprom_config.h"
+#include "../eeprom_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -106,8 +106,6 @@ extern uint32_t uart_baudrate;
 extern uint8_t frame_buffer[];
 extern uint16_t frame_head;
 
-
-
 #define MODBUS_POS_ID 0 // position in the frame where the address starts
 #define MODBUS_POS_FUNCTION 1 // position in the frame where the frame size is stored
 #define MODBUS_POS_DATA 2 // position in the frame where the data starts
@@ -118,7 +116,10 @@ extern uint16_t frame_head;
 void modbus_update(uint8_t* frame,uint16_t frameSize);
 int8_t modbus_precheck(uint8_t* frame, uint16_t frameSize);
 uint8_t modbus_id_request(uint8_t* frame, uint16_t frameSize);
-
+uint16_t modbus_read_crc16_le(const uint8_t* frame, uint16_t frameSize);
+void modbus_write_crc16_le(uint8_t* frame, uint16_t totalSize);
+void modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
+void exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, uint8_t  exception);
 #ifdef __cplusplus
 }
 #endif

@@ -8,7 +8,7 @@
 
 #include "config.h"
 #include "uart.h"
-#include "modbusServer.h"
+#include "modbus/server.h"
 #include "adc.h"
 #include "pwm.h"
 #include "eeprom_config.h"
