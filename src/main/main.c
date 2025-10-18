@@ -10,7 +10,8 @@ uint8_t frame_buffer[UART_BUFFER_SIZE];
 uint16_t frame_head = 0;
 uint8_t modbus_id = 0;
 uint32_t uart_baudrate = UART_BAUDRATE;
-
+uint16_t configurationRegisters[2];
+uint8_t numOfConfigurationRegisters=sizeof(configurationRegisters)/sizeof(uint16_t);
 
 #ifdef INPUT_DISCRETES
 uint16_t config_input_discretes[] = INPUT_DISCRETES; // function 2 register array
@@ -46,7 +47,7 @@ void modbus_message_handler(){
     if (frame_head >= UART_BUFFER_SIZE || frame_head < 4) return;
     int8_t mb_function = modbus_precheck(frame_buffer, frame_head);
     if (mb_function < 0) return;
-   
+    const uint8_t mb_id = modbus_id_request(frame_buffer, frame_head);
     // Update peripherals if needed before processing the request
     #ifdef INPUT_DISCRETES
     if (mb_function == MB_FUNCTION_READ_DISCRETE_INPUTS){
@@ -56,9 +57,12 @@ void modbus_message_handler(){
     sei();
     if (mb_function >= 0){
         modbus_update(frame_buffer, frame_head);
-        if ((mb_function == (MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS)) | (mb_function == (MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER)))
-             gpior0_set_bit(1);
-        else gpior0_set_bit(0);
+        if ((mb_id == MODBUS_CONFIGURATION_ID) && mb_function==MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS) { // Read holding registers request { // Configuration request
+             EVT_SET_CONFIGURATION_REGISTER;
+        } 
+        else if ((mb_function == (MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS)) | (mb_function == (MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER)))
+             EVT_SET_HOLDING_REGISTER;
+        else EVT_SET_COILS;
     } 
 }
 
@@ -337,6 +341,9 @@ void update_input_discretes(void)
     // configure alt uart pins    
     PORTMUX.USARTROUTEA = PORTMUX_USART1_NONE_gc | PORTMUX_USART0_ALT1_gc;
     uart_baudrate = load_baudrate_from_eeprom();
+    modbus_id=load_modbus_id_from_eeprom();
+    configurationRegisters[0]=(uint16_t)modbus_id;
+    configurationRegisters[1]=(uint16_t)(uart_baudrate/100);
     uint16_t T1_5; // 1.5 charcter time
     uint8_t lowLatency = MODBUS_LOW_LATENCY_MODE;
     if (lowLatency && uart_baudrate >= 115200){
@@ -352,23 +359,32 @@ void update_input_discretes(void)
     init_adc();
     init_tcb0_us(T1_5);
     init_uart0(uart_baudrate);
-    modbus_id=load_modbus_id_from_eeprom();
-    
+        
     sei();
 
     while (1) {
         #ifdef COILS
             if (GPIOR0 & EVT_UPDATE_COILS){
-                gpior0_clear_bit(0);
+                EVT_CLR_COILS;
                 update_coils();
             }         
         #endif
         #ifdef HOLDING_REGISTERS
             if (GPIOR0 & EVT_UPDATE_HOLDING_REGISTER){
-                gpior0_clear_bit(1);
+                EVT_CLR_HOLDING_REGISTER;
                 update_holding_registers();  
             }
         #endif
+            if (GPIOR0 & EVT_UPDATE_CONFIGURATION_REGISTER){
+                EVT_CLR_CONFIGURATION_REGISTER;
+                // store modbus id and baudrate in eeprom configuration registers
+                modbus_id=(uint8_t)(configurationRegisters[0] & 0xFF);
+                uart_baudrate=(uint32_t)(configurationRegisters[1])*100;
+                store_modbus_id_to_eeprom(modbus_id);
+                store_baudrate_to_eeprom(uart_baudrate);
+                // reinit uart with new baudrate
+                init_uart0(uart_baudrate);
+            }
         #ifdef INPUT_REGISTERS
             adc_sequencer(); 
         #endif

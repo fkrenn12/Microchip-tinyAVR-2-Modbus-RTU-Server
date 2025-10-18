@@ -10,10 +10,6 @@
 #define EEPROM_OFFSET_MODBUS_SERVER_NAME (uint8_t)0x03 // Offset in user row where the modbus server name is stored
 #define MAX_SERVERNAME_LENGTH 32 // Maximum length of the modbus server name
 
-#define HOLDING_REGISTER_MODBUS_ID 41000 // Holding register address where the modbus_id is stored
-#define HOLDING_REGISTER_BAUDRATE 41001 // Holding register address where the baudrate is stored
-#define HOLDING_REGISTER_SERVER_NAME 41002 // Holding register address where the server name starts (max 16 registers for 32 bytes)
-
 #define IOPIN_CODE 0x10
 #define PWM_CODE 0x20
 #define ADC_SINGLE_ENDED_CODE 0x30
