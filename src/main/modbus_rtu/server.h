@@ -11,8 +11,6 @@
 #include <inttypes.h>
 #include "exceptions.h"
 #include "functions.h"
-#include <avr/io.h>
-#include <avr/interrupt.h>
 
 #ifdef __cplusplus
 extern "C" {

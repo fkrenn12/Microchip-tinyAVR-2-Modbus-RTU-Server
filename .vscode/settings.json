@@ -1,6 +1,11 @@
 {
     "files.associations": {
         "config.h": "c",
-        "pwm.h": "c"
+        "pwm.h": "c",
+        "io.h": "c",
+        "ioavr128da32.h": "c",
+        "ioavr128da64.h": "c",
+        "iotn814.h": "c",
+        "ioavr128db48.h": "c"
     }
 }
