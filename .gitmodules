@@ -1,0 +1,3 @@
+[submodule "src/main/modbus_rtu"]
+	path = src/main/modbus_rtu
+	url = https://github.com/fkrenn12/modbus-rtu.git
