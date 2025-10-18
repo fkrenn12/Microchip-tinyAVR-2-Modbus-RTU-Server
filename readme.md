@@ -1,6 +1,11 @@
+## Cloning
+```bash
+git clone --recurse-submodules https://github.com/fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server.git
+```
+```bash
+gh repo clone --recurse-submodules fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server
+```
 ## Overview
-
-
 ## ![modbus logo](documents/modbus-logo.png) RTU Server  
  
 ## ![microchip](documents/microchip-logo.png) tinyAVR® 2 Microcontroller Family  
