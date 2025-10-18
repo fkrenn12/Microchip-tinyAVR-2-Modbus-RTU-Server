@@ -10,9 +10,9 @@
 #ifndef EEPROM_OFFSET_BAUDRATE
 #define EEPROM_OFFSET_BAUDRATE  ((uint8_t)0x01)
 #endif
-#ifndef EEPROM_OFFSET_MODBUS_SERVER_NAME
-#define EEPROM_OFFSET_MODBUS_SERVER_NAME ((uint8_t)0x03)
-#endif
+//#ifndef EEPROM_OFFSET_MODBUS_SERVER_NAME
+//#define EEPROM_OFFSET_MODBUS_SERVER_NAME ((uint8_t)0x03)
+//#endif
 
 #ifndef UART_BAUDRATE
 #define UART_BAUDRATE 9600u
@@ -45,6 +45,7 @@ uint8_t load_modbus_id_from_eeprom(void) {
     return id;
 }
 
+/*
 void load_modbus_server_name_from_eeprom(uint8_t* nameBuffer, uint8_t bufferSize) {
     if (bufferSize == 0) return; // nothing to do
     for (uint8_t i = 0; i < bufferSize - 1; i++) {
@@ -57,7 +58,9 @@ void load_modbus_server_name_from_eeprom(uint8_t* nameBuffer, uint8_t bufferSize
     }
     nameBuffer[bufferSize - 1] = 0; // ensure null-termination
 }
+*/
 
+/*
 void store_modbus_server_name_to_eeprom(const uint8_t* name) {
     for (uint8_t i = 0; i < MAX_SERVERNAME_LENGTH; i++) { // limit to 32 bytes
         uint8_t c = name[i];
@@ -65,6 +68,7 @@ void store_modbus_server_name_to_eeprom(const uint8_t* name) {
         if (c == 0 || c == 0xff) break; // null-terminated
     }
 }
+*/
 
 void store_baudrate_to_eeprom(uint32_t baudrate) {
     // Encode as baud/100, clamp to 16-bit
@@ -78,7 +82,7 @@ void store_modbus_id_to_eeprom(uint8_t modbus_id) {
 }
 
 void eeprom_erase(void) {
-    for (uint8_t i = 0; i < 1 + 2 + MAX_SERVERNAME_LENGTH; i++) {
-            eeprom_write_byte((uint8_t*)(EEPROM_OFFSET_MODBUS_SERVER_NAME + i), 0xff);
+    for (uint8_t i = 0; i < 3; i++) {
+            eeprom_write_byte((uint8_t*)i, 0xff);
     }
 }

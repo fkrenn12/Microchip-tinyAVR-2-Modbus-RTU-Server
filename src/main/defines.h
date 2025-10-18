@@ -7,8 +7,8 @@
 #define BIT_POSITION(x) (__builtin_ctz(x))
 #define EEPROM_OFFSET_MODBUS_ID (uint8_t)0x00 // Offset in user row where the modbus_id is stored
 #define EEPROM_OFFSET_BAUDRATE (uint8_t)0x01 // Offset in user row where the baudrate isstored
-#define EEPROM_OFFSET_MODBUS_SERVER_NAME (uint8_t)0x03 // Offset in user row where the modbus server name is stored
-#define MAX_SERVERNAME_LENGTH 32 // Maximum length of the modbus server name
+// #define EEPROM_OFFSET_MODBUS_SERVER_NAME (uint8_t)0x03 // Offset in user row where the modbus server name is stored
+// #define MAX_SERVERNAME_LENGTH 32 // Maximum length of the modbus server name
 
 #define IOPIN_CODE 0x10
 #define PWM_CODE 0x20
