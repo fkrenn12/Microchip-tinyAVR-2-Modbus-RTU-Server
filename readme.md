@@ -1,10 +1,3 @@
-## Cloning
-```bash
-git clone --recurse-submodules https://github.com/fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server.git
-```
-```bash
-gh repo clone --recurse-submodules fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server
-```
 ## Overview
 ## ![modbus logo](documents/modbus-logo.png) RTU Server  
  
@@ -40,6 +33,20 @@ Review the functions here: [MODBUS specification](https://github.com/fkrenn12/Mi
 ⭐ Digital Inputs (discrete inputs)  
 ⭐ Dual Slope PWM (holding registers)   
 ⭐ ADC (input registers)  
+
+## Cloning
+```bash
+git clone --recurse-submodules https://github.com/fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server.git
+```
+```bash
+gh repo clone --recurse-submodules fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server
+```
+### Update submodules
+```bash
+git submodule status
+git submodule update --remote
+```
+
 
 ## Workflow
 👉  Edit the file `/source/main/config.h` to adjust settings.  
