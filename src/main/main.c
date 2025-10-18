@@ -43,6 +43,7 @@ void init_peripheral(void);
 void modbus_message_handler(){
     // Process the received data in buffer
     cli();
+    if (frame_head >= UART_BUFFER_SIZE || frame_head < 4) return;
     int8_t mb_function = modbus_precheck(frame_buffer, frame_head);
     if (mb_function < 0) return;
    

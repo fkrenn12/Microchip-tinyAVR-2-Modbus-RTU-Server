@@ -82,15 +82,19 @@
 #include <inttypes.h>
 #include "exceptions.h"
 #include "functions.h"
-#include "../crc.h"
-#include "../uart.h"
-#include "../config.h"
-// #include <avr/eeprom.h>
+// #include "../uart.h"
 #include "../eeprom_config.h"
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern uint8_t frame_buffer[];
+extern uint16_t frame_head;
+
 extern uint16_t coils[];
 extern uint16_t input_discretes[];
 extern uint16_t input_registers[];
@@ -103,23 +107,40 @@ extern uint8_t numOfHoldingRegisters;
 
 extern uint8_t modbus_id;
 extern uint32_t uart_baudrate;
-extern uint8_t frame_buffer[];
-extern uint16_t frame_head;
 
 #define MODBUS_POS_ID 0 // position in the frame where the address starts
 #define MODBUS_POS_FUNCTION 1 // position in the frame where the frame size is stored
-#define MODBUS_POS_DATA 2 // position in the frame where the data starts
+#define MODBUS_POS_PDU 2 // position in the frame where the protovol data unit  starts
 #define MODBUS_POS_BYTECOUNT 6
 #define MODBUS_POS_REGISTERVALUES 7
 
+#define MODBUS_COIL_ON_VALUE   0xFF00u
+#define MODBUS_COIL_OFF_VALUE  0x0000u
+
+#define MODBUS_RESPONSE_SIZE_EXCEPTION 5u // ID(1) + FUNC(1) + EXC(1) + CRC(2)
+#define MODBUS_RESPONSE_SIZE_WRITE_SINGLE_COIL 8u // ID(1) + FUNC(1) + BYTECOUNT(1) + CRC(2)
+#define MODBUS_RESPONSE_SIZE_WRITE_MULTIPLE_COILS 8u // ID(1) + FUNC(1) + BYTECOUNT(1) + CRC(2)
+#define MODBUS_RESPONSE_SIZE_WRITE_MULTIPLE_HOLDING_REGISTERS 8u // ID(1) + FUNC(1) + BYTECOUNT(1) + CRC(2)
+#define MODBUS_RESPONSE_SIZE_WRITE_SINGLE_REGISTER 8u // ID(1) + FUNC(1) + BYTECOUNT(1) + CRC(2)
+
+
+// external function definitions
+extern void sendPacket(uint8_t* frame, uint16_t frameSize);
+// helper function definitions
+uint16_t modbus_output_address(const uint8_t* frame);
+uint16_t modbus_output_value(const uint8_t* frame);
+uint16_t modbus_quantity_of_registers(const uint8_t* frame);
 // function definitions
 void modbus_update(uint8_t* frame,uint16_t frameSize);
+uint16_t modbus_crc16(uint8_t *buf, uint16_t len);
 int8_t modbus_precheck(uint8_t* frame, uint16_t frameSize);
 uint8_t modbus_id_request(uint8_t* frame, uint16_t frameSize);
 uint16_t modbus_read_crc16_le(const uint8_t* frame, uint16_t frameSize);
 void modbus_write_crc16_le(uint8_t* frame, uint16_t totalSize);
 void modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
+void modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
 void exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, uint8_t  exception);
+
 #ifdef __cplusplus
 }
 #endif
