@@ -32,5 +32,4 @@ void modbus_read_input_registers(uint8_t* frame, uint16_t frameSize, uint8_t bro
     const uint8_t responseSize = (uint8_t)(3u + byteCount + 2u); // 1(ID)+1(FUNC)+1(BYTE_CNT)+N(DATA)+2(CRC)
     modbus_write_crc16_le(frame, responseSize);
     sendPacket(frame, responseSize);
-    return 0u;
 }

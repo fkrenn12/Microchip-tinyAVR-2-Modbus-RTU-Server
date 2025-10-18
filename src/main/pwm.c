@@ -4,7 +4,8 @@ static uint16_t pwm_frequency = 0;
 static uint8_t pwm_channel_WO0_initialized, pwm_channel_WO1_initialized, pwm_channel_WO2_initialized = 0;
 static uint16_t percent_WO0, percent_WO1, percent_WO2  = 0;
 
-static uint8_t tca_single_divider_from_freq(uint16_t freqHz) {
+/*
+static uint8_t tca_single_divider_from_freq_single_slope(uint16_t freqHz) {
   if (freqHz >= 40001 && freqHz <= 65535) {
     return TCA_SINGLE_CLKSEL_DIV2_gc;
   } else if (freqHz >= 20001 && freqHz <= 40000) {
@@ -22,7 +23,7 @@ static uint8_t tca_single_divider_from_freq(uint16_t freqHz) {
   }
   return 0xFF; // out of supported range
 }
-
+*/
 static uint8_t tca_single_divider_from_freq_dual_slope(uint16_t freqHz) {
   if (freqHz >= 40001 && freqHz <= 65535) {
     return TCA_SINGLE_CLKSEL_DIV1_gc;

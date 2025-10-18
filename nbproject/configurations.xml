@@ -4,12 +4,14 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="f1" displayName="modbus_rtu" projectFiles="true">
+        <itemPath>src/main/modbus_rtu/exceptions.h</itemPath>
+        <itemPath>src/main/modbus_rtu/functions.h</itemPath>
+        <itemPath>src/main/modbus_rtu/server.h</itemPath>
+      </logicalFolder>
       <itemPath>src/main/adc.h</itemPath>
       <itemPath>src/main/config.h</itemPath>
       <itemPath>src/main/main.h</itemPath>
-      <itemPath>src/main/modbusServer.h</itemPath>
-      <itemPath>src/main/modbus_exceptions.h</itemPath>
-      <itemPath>src/main/modbus_functions.h</itemPath>
       <itemPath>src/main/peripheral.h</itemPath>
       <itemPath>src/main/pwm.h</itemPath>
       <itemPath>src/main/uart.h</itemPath>
@@ -27,12 +29,22 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="f1" displayName="modbus_rtu" projectFiles="true">
+        <itemPath>src/main/modbus_rtu/server.c</itemPath>
+        <itemPath>src/main/modbus_rtu/function_01_read_coils.c</itemPath>
+        <itemPath>src/main/modbus_rtu/function_02_read_discrete_inputs.c</itemPath>
+        <itemPath>src/main/modbus_rtu/function_03_read_holding_registers.c</itemPath>
+        <itemPath>src/main/modbus_rtu/function_04_read_input_registers.c</itemPath>
+        <itemPath>src/main/modbus_rtu/function_05_write_single_coil.c</itemPath>
+        <itemPath>src/main/modbus_rtu/function_06_write_single_holding_register.c</itemPath>
+        <itemPath>src/main/modbus_rtu/function_15_write_multiple_coils.c</itemPath>
+        <itemPath>src/main/modbus_rtu/function_16_write_multiple_holding_registers.c</itemPath>
+      </logicalFolder>
       <itemPath>src/main/adc.c</itemPath>
-      <itemPath>src/main/crc.c</itemPath>
       <itemPath>src/main/main.c</itemPath>
-      <itemPath>src/main/modbusServer.c</itemPath>
       <itemPath>src/main/pwm.c</itemPath>
       <itemPath>src/main/uart.c</itemPath>
+      <itemPath>src/main/eeprom_config.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>

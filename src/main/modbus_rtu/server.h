@@ -68,6 +68,12 @@ uint16_t modbus_read_crc16_le(const uint8_t* frame, uint16_t frameSize);
 void modbus_write_crc16_le(uint8_t* frame, uint16_t totalSize);
 void modbus_write_single_coil(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
 void modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
+void modbus_read_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
+void modebus_read_discrete_inputs(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
+void modbus_write_multiple_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
+void modbus_read_input_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag);
+void modbus_read_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag, uint16_t* registers, uint8_t numOfRegisters, uint16_t offset);
+void modbus_write_multiple_holding_registers(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag, uint16_t* registers, uint8_t numOfRegisters, uint16_t offset);
 void exceptionResponse(uint8_t* frame, uint8_t function, uint8_t broadcastFlag, uint8_t  exception);
 
 #ifdef __cplusplus

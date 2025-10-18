@@ -25,6 +25,10 @@ void modbus_write_crc16_le(uint8_t* frame, uint16_t totalSize) {
     frame[(uint16_t)(totalSize - 1u)] = (uint8_t)(crc >> 8);      // high byte
 }
 
+uint8_t modbus_id_request(uint8_t* frame, uint16_t frameSize){
+    return frame[MODBUS_POS_ID];
+}
+
 // protocol data unit (PDU) address extraction helper
 uint16_t modbus_output_address(const uint8_t* frame) {
     return (uint16_t)(((uint16_t)frame[MODBUS_POS_PDU] << 8) | (uint16_t)frame[MODBUS_POS_PDU + 1]);
@@ -38,10 +42,6 @@ uint16_t modbus_output_value(const uint8_t* frame) {
 // protocol data unit (PDU) quantity extraction helper
 uint16_t modbus_quantity_of_registers(const uint8_t* frame) {
     return (uint16_t)(((uint16_t)frame[MODBUS_POS_PDU + 2] << 8) | (uint16_t)frame[MODBUS_POS_PDU + 3]);
-}
-
-uint8_t modbus_id_request(uint8_t* frame, uint16_t frameSize){
-    return frame[MODBUS_POS_ID];
 }
 
 int8_t modbus_precheck(uint8_t* frame, uint16_t frameSize)
@@ -69,20 +69,15 @@ void modbus_update(uint8_t* frame, uint16_t frameSize){
     uint8_t ackFlag = (id == modbus_id);
     uint8_t configFlag = (id == MODBUS_CONFIGURATION_ID);
     uint8_t function = frame[MODBUS_POS_FUNCTION];
-
-    // Serial1.print("Modbus Function = ");
-    // Serial1.println(function);
     if (configFlag){
         // Configuration commands
         switch (function) {
             case MB_FUNCTION_READ_HOLDING_REGISTERS:
-                //modbus_read_configuration(frame, frameSize, 0);
                 modbus_read_holding_registers(frame, frameSize, broadcastFlag, configurationRegisters, numOfConfigurationRegisters, MODBUS_CONFIGURATION_START);
                 break;
 
             case MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS:
                 modbus_write_multiple_holding_registers(frame, frameSize, broadcastFlag, configurationRegisters, numOfConfigurationRegisters, MODBUS_CONFIGURATION_START);
-                // modbus_write_multiple_configuration_registers(frame, frameSize, 0);
                 break;
             default:
                 // Unknown configuration function: reply with exception (function code 0x01 per Modbus)

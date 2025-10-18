@@ -19,5 +19,4 @@ void modbus_write_single_holding_register(uint8_t* frame, uint16_t frameSize, ui
     // Build response: echo ID..VALUE and append CRC
     modbus_write_crc16_le(frame, MODBUS_RESPONSE_SIZE_WRITE_SINGLE_REGISTER);
     if (!broadcastFlag) sendPacket(frame, MODBUS_RESPONSE_SIZE_WRITE_SINGLE_REGISTER);
-    return 0u;
 }

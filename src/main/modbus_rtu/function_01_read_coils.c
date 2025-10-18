@@ -45,5 +45,4 @@ void modbus_read_coils(uint8_t* frame, uint16_t frameSize, uint8_t broadcastFlag
     const uint8_t responseSize = (uint8_t)(3u + byteCount + 2u);
     modbus_write_crc16_le(frame, responseSize);
     sendPacket(frame, responseSize);
-    return 0u;
 }
