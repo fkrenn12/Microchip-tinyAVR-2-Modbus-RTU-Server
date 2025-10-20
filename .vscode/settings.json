@@ -1,6 +1,0 @@
-{
-    "mplab.clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}\\_build\\tinyAVR-2-Modbus-RTU-Server\\default"
-    ],
-    "mplab.clangd.path": ""
-}
