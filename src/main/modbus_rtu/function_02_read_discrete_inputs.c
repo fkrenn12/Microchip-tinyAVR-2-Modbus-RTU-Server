@@ -25,29 +25,28 @@
 extern Modbus modbus;
 void modebus_read_discrete_inputs()
 {   
-    // Parse request
     const uint16_t startingAddress = modbus_output_address();
-    const uint16_t quantity        = modbus_quantity_of_registers();
+    const uint16_t numOfRegisters = modbus_quantity_of_registers();
+    const uint8_t invalidStartAdress = (startingAddress >= modbus.discretes.count) ? 1 : 0;
+    const uint8_t incorrectPackageSize = (modbus.actual_size == 8u) ? 0 : 1;
+    const uint8_t invalidNumberOfRegisters = (uint8_t)((!numOfRegisters) || ((uint32_t)startingAddress + numOfRegisters > modbus.discretes.count));
     // Basic size check for request
-    if ((quantity == 0u) || (modbus.actual_size != 8u) || ((uint32_t)startingAddress + (uint32_t)quantity > (uint32_t)modbus.discretes.count)){
-            exceptionResponse( MB_FUNCTION_READ_DISCRETE_INPUTS, modbus.broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);
-            return; 
-    }
-    // Address bounds against input_discretes array
-    if (startingAddress >= modbus.discretes.count) {
-        exceptionResponse( MB_FUNCTION_READ_DISCRETE_INPUTS, modbus.broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
+    uint8_t exception = (invalidNumberOfRegisters || incorrectPackageSize) ? MB_EXCEPTION_ILLEGAL_DATA_VALUE : 0;
+    exception = (invalidStartAdress) ? MB_EXCEPTION_ILLEGAL_DATA_ADDRESS : exception;
+    if (exception){
+        exceptionResponse(MB_FUNCTION_READ_DISCRETE_INPUTS, modbus.broadcastFlag, exception);
         return;
     }
     
     // Compute response payload size in bytes (ceil(quantity / 8))
-    const uint8_t byteCount = (uint8_t)((quantity + 7u) >> 3);
+    const uint8_t byteCount = (uint8_t)((numOfRegisters + 7u) >> 3);
 
     // Build response
     modbus.buffer[MODBUS_POS_FUNCTION] = MB_FUNCTION_READ_DISCRETE_INPUTS;
     modbus.buffer[MODBUS_POS_PDU]     = byteCount;           // byte count at position 2 for read responses
     uint8_t outIndex = MODBUS_POS_FUNCTION + 2;       // start writing packed data at frame[3]
 
-    uint16_t remaining = quantity;
+    uint16_t remaining = numOfRegisters;
     uint16_t srcIndex  = startingAddress;
 
     for (uint8_t b = 0; b < byteCount; ++b) {
