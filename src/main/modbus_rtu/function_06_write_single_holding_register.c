@@ -1,5 +1,14 @@
 #include "server.h"
 extern Modbus modbus;
+/**
+ * Handles the Modbus function to write a single holding register.
+ * Extracts the target register address and the value to be written from the Modbus buffer.
+ * Performs bounds checking on the specified address against the available holding registers.
+ * Verifies the request packet size for correctness to ensure proper formatting.
+ * Writes the given value into the specified holding register if checks are passed.
+ * Builds a response containing the echoed address/value and appends CRC for validation.
+ * Sends the response unless it is a broadcast request, where no response is required.
+ */
 void modbus_write_single_holding_register()
 {
     const uint16_t outputAddress = modbus_output_address(modbus.buffer);

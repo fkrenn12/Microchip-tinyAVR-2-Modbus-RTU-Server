@@ -1,4 +1,27 @@
 #include "server.h"
+/**
+ * Handles Modbus function code 0x02: Read Discrete Inputs.
+ *
+ * This function processes a request to read a range of discrete input registers
+ * and generates a response containing the binary states of the requested inputs.
+ *
+ * Steps performed:
+ * 1. Parses the starting address and quantity of discrete inputs from the Modbus
+ *    request buffer.
+ * 2. Validates the request for proper format, size, and address range.
+ * 3. Computes the response payload size based on the number of registers requested.
+ * 4. Reads the specified discrete inputs and packs their values into bytes in
+ *    the response buffer.
+ * 5. Calculates the CRC and sends the response to the master.
+ *
+ * Error handling:
+ * - If the request data is invalid (e.g., zero quantity, invalid size, out of bounds),
+ *   an exception response is generated and sent.
+ *
+ * Note:
+ * - The packed discrete input values are sent LSB-first in each byte.
+ * - The response structure includes the function code, byte count, data, and CRC.
+ */
 extern Modbus modbus;
 void modebus_read_discrete_inputs()
 {   

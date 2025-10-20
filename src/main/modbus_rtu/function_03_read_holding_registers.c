@@ -1,6 +1,25 @@
 #include "server.h"
+/**
+ * Handles the Modbus function code for reading holding registers.
+ *
+ * @param isConfig Specifies whether configuration registers or holding
+ *                 registers are read. Pass 1 for configuration registers
+ *                 or 0 for standard holding registers.
+ *
+ * This function parses the request received via the Modbus protocol,
+ * determines the starting address and number of registers to read,
+ * performs strict size and bounds checks to ensure the request is
+ * valid, and generates an appropriate response.
+ *
+ * If the request is invalid (due to out-of-bound addresses, invalid
+ * register count, or incorrect packet size), an exception response
+ * is sent and the function terminates early to prevent errors.
+ *
+ * For valid requests, the function builds a response containing the
+ * requested register values, calculates the CRC checksum, and sends
+ * the response over the Modbus interface.
+ */
 extern Modbus modbus;
-
 void modbus_read_holding_registers(uint8_t isConfig)
 {
     // Parse request

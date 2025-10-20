@@ -1,4 +1,18 @@
 #include "server.h"
+/**
+ * Handles the Modbus "Read Coils" function (Function Code 0x01).
+ * Reads a specified number of coil statuses starting at a given address
+ * from the Modbus server's coil table and sends the response back to the client.
+ *
+ * The response includes the coil values packed into bytes, with each bit
+ * representing the LSB-first status of a coil. Validates the request parameters such as
+ * the starting address, quantity of coils, and overall request size before processing.
+ *
+ * If the request is invalid (e.g., illegal data value, address exceeds bounds,
+ * or improper message size), an appropriate exception response is sent to the client.
+ * Builds the response payload, including the byte count, packed coil data,
+ * and appends a CRC checksum before sending the response.
+ */
 extern Modbus modbus;
 void modbus_read_coils()
 {

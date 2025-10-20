@@ -27,6 +27,16 @@ Modbus modbus = {
     .holding.count = 0
 };
 
+/**
+ * Calculates the 16-bit CRC (Cyclic Redundancy Check) for a given buffer of data.
+ *
+ * @param buf Pointer to the data buffer for which the CRC is to be calculated.
+ * @param len Length of the data buffer in bytes.
+ * @return The calculated 16-bit CRC value.
+ *
+ * The CRC is initialized to 0xFFFF and processed bit-by-bit according to the
+ * Modbus RTU specification. Polynomial used is 0xA001 (reversed of 0x8005).
+ */
 uint16_t modbus_crc16(uint8_t *buf, uint16_t len)
 {
     uint16_t crc = 0xFFFF;

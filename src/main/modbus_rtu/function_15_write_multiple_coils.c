@@ -1,5 +1,30 @@
 #include "server.h"
 extern Modbus modbus;
+/**
+ * Handles a Modbus "Write Multiple Coils" request.
+ *
+ * This function processes incoming Modbus requests to write multiple
+ * coils starting at a specific address. It performs the following steps:
+ *
+ * 1. Parses the request fields, including starting address, coil count,
+ *    byte count, and calculates the total expected size of the request.
+ *
+ * 2. Validates the request by ensuring the byte count matches the coil count,
+ *    the coil count is non-zero, the request size is correct, and the address
+ *    range is within the valid bounds of the coil register array.
+ *
+ * 3. If validation fails, an exception response is sent based on the type of
+ *    error (illegal data value or illegal data address).
+ *
+ * 4. If validation passes, extracts individual coil values from the packed
+ *    bytes within the request buffer and updates the corresponding coil
+ *    register values sequentially.
+ *
+ * 5. Constructs a response that echoes the first six bytes of the request
+ *    (transaction ID, protocol function code, starting address, and coil
+ *    count) followed by a CRC checksum. If the request is not a broadcast,
+ *    the response is sent to the requester.
+ **/
 void modbus_write_multiple_coils()
 {
     // Parse request fields

@@ -1,4 +1,19 @@
 #include "server.h"
+/**
+ * Reads Modbus input registers and builds a response frame.
+ *
+ * The function processes Modbus communication frames to handle the "Read Input Registers" request.
+ * It validates the request size, starting address, and register count. Upon validation success, it reads
+ * the requested registers, constructs a response containing data, and transmits it back.
+ *
+ * Steps:
+ * - Parse the request from the Modbus frame.
+ * - Validate the frame size and ensure bounds are within input registers' range.
+ * - Populate the response buffer with requested register values.
+ * - Build the response with CRC validation and send it back.
+ *
+ * Exception responses are sent for errors including invalid data value or address.
+ */
 extern Modbus modbus;
 void modbus_read_input_registers()
 {
