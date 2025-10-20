@@ -28,8 +28,8 @@ extern Modbus modbus;
 void modbus_write_multiple_coils()
 {
     // Parse request fields
-    const uint16_t startCoil = modbus_output_address(modbus.buffer);
-    const uint16_t coilCount = modbus_quantity_of_registers(modbus.buffer);
+    const uint16_t startCoil = modbus_output_address();
+    const uint16_t coilCount = modbus_quantity_of_registers();
     const uint8_t byteCount = modbus.buffer[MODBUS_POS_BYTECOUNT];
     const uint8_t expectedByteCount = (uint8_t)((coilCount + 7u) >> 3);
     const uint16_t totalExpectedSize = (uint16_t)(9u + byteCount); // ID(1)+FUNC(1)+START(2)+COUNT(2)+BYTE_CNT(1)+DATA(N)+CRC(2)

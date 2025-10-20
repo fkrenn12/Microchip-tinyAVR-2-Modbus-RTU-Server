@@ -26,8 +26,8 @@ extern Modbus modbus;
 void modebus_read_discrete_inputs()
 {   
     // Parse request
-    const uint16_t startingAddress = modbus_output_address(modbus.buffer);
-    const uint16_t quantity        = modbus_quantity_of_registers(modbus.buffer);
+    const uint16_t startingAddress = modbus_output_address();
+    const uint16_t quantity        = modbus_quantity_of_registers();
     // Basic size check for request
     if ((quantity == 0u) || (modbus.actual_size != 8u) || ((uint32_t)startingAddress + (uint32_t)quantity > (uint32_t)modbus.discretes.count)){
             exceptionResponse( MB_FUNCTION_READ_DISCRETE_INPUTS, modbus.broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);

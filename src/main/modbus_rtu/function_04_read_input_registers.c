@@ -18,8 +18,8 @@ extern Modbus modbus;
 void modbus_read_input_registers()
 {
     // Parse request
-    const uint16_t startingAddress = modbus_output_address(modbus.buffer);
-    const uint16_t registerCount  = modbus_quantity_of_registers(modbus.buffer);
+    const uint16_t startingAddress = modbus_output_address();
+    const uint16_t registerCount  = modbus_quantity_of_registers();
     // Strict request size
     if (modbus.actual_size != 8u) {
         exceptionResponse( MB_FUNCTION_READ_INPUT_REGISTERS, modbus.broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);

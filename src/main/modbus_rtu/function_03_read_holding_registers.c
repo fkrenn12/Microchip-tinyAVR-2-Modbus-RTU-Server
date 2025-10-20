@@ -27,8 +27,8 @@ void modbus_read_holding_registers(uint8_t isConfig)
     uint16_t count = (isConfig)?modbus.config.count:modbus.holding.count;
     uint16_t* registers = (isConfig)?modbus.config.registers:modbus.holding.registers;
 
-    const uint16_t startingAddress = modbus_output_address(modbus.buffer) - offset;
-    const uint16_t registerCount  = modbus_quantity_of_registers(modbus.buffer);
+    const uint16_t startingAddress = modbus_output_address() - offset;
+    const uint16_t registerCount  = modbus_quantity_of_registers();
     // Strict request size
     if ((registerCount == 0u) || (modbus.actual_size != 8u) || ((uint32_t)startingAddress + (uint32_t)registerCount > (uint32_t)count)) {
         exceptionResponse(MB_FUNCTION_READ_HOLDING_REGISTERS, modbus.broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_VALUE);

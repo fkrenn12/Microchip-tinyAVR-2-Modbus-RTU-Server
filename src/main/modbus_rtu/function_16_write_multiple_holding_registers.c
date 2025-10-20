@@ -31,8 +31,8 @@ void modbus_write_multiple_holding_registers(uint8_t isConfig)
     uint16_t count = (isConfig)?modbus.config.count:modbus.holding.count;
     uint16_t* registers = (isConfig)?modbus.config.registers:modbus.holding.registers;
     // Parse request
-    const uint16_t startingAddress = modbus_output_address(modbus.buffer) - offset;
-    const uint16_t registerCount  = modbus_quantity_of_registers(modbus.buffer);
+    const uint16_t startingAddress = modbus_output_address() - offset;
+    const uint16_t registerCount  = modbus_quantity_of_registers();
     const uint8_t  byteCount      = modbus.buffer[MODBUS_POS_BYTECOUNT];
     const uint16_t expectedBytes = (uint16_t)(registerCount * 2u);
     const uint16_t expectedFrame = (uint16_t)(9u + (uint16_t)byteCount);
@@ -52,7 +52,7 @@ void modbus_write_multiple_holding_registers(uint8_t isConfig)
     uint8_t dataIndex = MODBUS_POS_REGISTERVALUES; // first data byte after byteCount
     uint16_t dst = startingAddress;
     for (uint16_t i = 0; i < registerCount; ++i) {
-        const uint16_t value = (uint16_t)(((uint16_t)modbus.buffer[dataIndex] << 8) | (uint16_t)modbus.buffer[(uint8_t)(dataIndex + 1u)]);
+        const uint16_t value = (uint16_t)(((uint16_t)modbus.buffer[dataIndex] << 8) | (uint16_t)modbus.buffer[dataIndex + 1]);
         registers[dst++] = value;
         dataIndex = (uint8_t)(dataIndex + 2u);
     }

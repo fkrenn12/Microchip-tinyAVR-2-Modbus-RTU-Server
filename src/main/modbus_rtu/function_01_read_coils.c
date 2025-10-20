@@ -16,8 +16,8 @@
 extern Modbus modbus;
 void modbus_read_coils()
 {
-    const uint16_t startingAddress = modbus_output_address(modbus.buffer);
-    const uint16_t numOfRegisters = modbus_quantity_of_registers(modbus.buffer);
+    const uint16_t startingAddress = modbus_output_address();
+    const uint16_t numOfRegisters = modbus_quantity_of_registers();
     const uint8_t invalidStartAdress = (startingAddress >= modbus.coils.count) ? 1 : 0;
     const uint8_t incorrectPackageSize = (modbus.actual_size == 8u) ? 0 : 1;
     const uint8_t invalidNumberOfRegisters = (uint8_t)((!numOfRegisters) || ((uint32_t)startingAddress + numOfRegisters > modbus.coils.count));

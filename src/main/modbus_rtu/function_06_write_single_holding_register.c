@@ -11,8 +11,8 @@ extern Modbus modbus;
  */
 void modbus_write_single_holding_register()
 {
-    const uint16_t outputAddress = modbus_output_address(modbus.buffer);
-    const uint16_t rawValue = modbus_output_value(modbus.buffer);
+    const uint16_t outputAddress = modbus_output_address();
+    const uint16_t rawValue = modbus_output_value();
     // Address bounds check
     if (outputAddress >= (uint16_t)modbus.holding.count) {
         exceptionResponse( MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER, modbus.broadcastFlag, MB_EXCEPTION_ILLEGAL_DATA_ADDRESS);
