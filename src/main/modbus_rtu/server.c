@@ -1,12 +1,12 @@
 #include "server.h"
 #include <avr/io.h>
 
-modbus_frame_callback_t modbus_send_package_callback = 0;
+modbus_frame_callback_t modbus_send_package_callback = (modbus_frame_callback_t)0;
 
 Modbus modbus = {
     .buffer = {0},
     .head   = 0u,
-    .crc    = 0u,
+    .crc_appended = 0u,
     .updateFlag  = 0u,
     .actual_size   = 0u,
     .ackFlag = 0u,
@@ -103,12 +103,25 @@ uint8_t modbus_need_update_coils(){
     return (uint8_t)((mb_id == modbus.id) && ((mb_function == MB_FUNCTION_WRITE_MULTIPLE_COILS) || (mb_function == MB_FUNCTION_WRITE_SINGLE_COIL)));
 }
 
+/**
+ * Performs pre-checks on the received Modbus frame to ensure its integrity and validity.
+ *
+ * @return The Modbus function code if all checks pass, or -1 if validation fails.
+ *
+ * This function verifies the following:
+ * 1. The frame size is at least 6 bytes.
+ * 2. The CRC value in the frame matches the calculated CRC.
+ * 3. The slave ID matches the device's ID or is a broadcast/configuration ID.
+ *
+ * If all checks pass, it extracts and sets the Modbus context values such as `broadcastFlag`,
+ * `ackFlag`, `configFlag`, and `function`. These flags determine how the package will be processed.
+ */
 int8_t modbus_precheck()
 {
     if (modbus.actual_size < 6) return -1;
     // Verify CRC: received is little-endian in frame [low, high]
-    const uint16_t receivedCrc = modbus_read_crc16_le(&modbus); //
-    if (modbus_crc16(modbus.buffer, (uint16_t)(modbus.actual_size)) == receivedCrc) {
+    modbus.crc_appended = modbus_read_crc16_le(); //
+    if (modbus_crc16(modbus.buffer, (uint16_t)(modbus.actual_size)) == modbus.crc_appended) {
         return -1;
     }
     // Verify slave ID matches our device
@@ -125,23 +138,47 @@ int8_t modbus_precheck()
     return (uint16_t)modbus.buffer[MODBUS_POS_FUNCTION];
 }
 
+/**
+ * Prepares the Modbus package for processing after receiving data.
+ *
+ * If the Modbus buffer contains any data (head > 0), this function finalizes the package
+ * by setting the `actual_size` to the current buffer length. It then performs a preliminary
+ * check on the package using `modbus_precheck` to validate its integrity, including CRC
+ * and device ID verification. Based on the precheck result, the `updateFlag` is set to
+ * indicate whether the received package is valid and requires further processing.
+ * Finally, the buffer head is reset to 0 to prepare for the next data reception.
+ */
 void modbus_package_ready(){
     if (modbus.head > 0) {
         modbus.actual_size = modbus.head;
         const int8_t function = modbus_precheck();
-        if (function > 0){    
-            modbus.updateFlag = 1;      
-        }  
+        modbus.updateFlag = (uint8_t)(function > 0);
     modbus.head=0;
   }
 }
 
-// Interrupt driven function
+/**
+ * Handles a single received character from the Modbus communication stream.
+ *
+ * @param c The received character to be stored in the Modbus buffer.
+ *
+ * This function appends the received character to the Modbus buffer, provided
+ * the buffer has not reached its maximum capacity. If the buffer reaches its
+ * limit, additional characters are ignored until processed.
+ */
 void modbus_char_received(uint8_t c){
     if (modbus.head < MODBUS_BUFFER_SIZE ) modbus.buffer[modbus.head++] = c;
-
 }
 
+/**
+ * Checks if the Modbus context requires updating and clears the update flag.
+ *
+ * @return A non-zero value if an update is required; otherwise, returns 0.
+ *
+ * This function reads the current state of the Modbus `updateFlag` to determine
+ * if a processing update is needed. After returning the state, it clears the update
+ * flag to ensure it doesn't trigger repetitive updates in subsequent calls.
+ */
 uint8_t modbus_need_update(){
     const uint8_t state = modbus.updateFlag;
     modbus.updateFlag = 0;
@@ -175,27 +212,33 @@ void modbus_set_configuration_registers(uint16_t* registers, uint16_t count){
     modbus.config.count = count;
 }
 
+/**
+ * Sets the callback function to be used for sending Modbus data packets.
+ *
+ * @param callback Function pointer to the user-defined callback responsible for transmitting Modbus packets.
+ *
+ * The provided callback is used by the Modbus library to send data packets, allowing integration
+ * with various communication mediums (e.g., UART, RS485). Users must ensure the callback is implemented
+ * and registered before attempting to send packets.
+ */
 void modbus_set_send_package_callback(modbus_frame_callback_t callback){
     modbus_send_package_callback = callback;
 }
 
 void modbus_update(){
-    // Check CRC
-    if (modbus_crc16(modbus.buffer, modbus.actual_size - 2) != modbus_read_crc16_le(&modbus)) return;
-
     if (modbus.configFlag){
         // Configuration commands
         switch (modbus.function) {
             case MB_FUNCTION_READ_HOLDING_REGISTERS:
-                modbus_read_holding_registers( MODBUS_ISCONFIG);
+                modbus_read_holding_registers(MODBUS_ISCONFIG);
                 break;
 
             case MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS:
-                modbus_write_multiple_holding_registers( MODBUS_ISCONFIG);
+                modbus_write_multiple_holding_registers(MODBUS_ISCONFIG);
                 break;
             default:
                 // Unknown configuration function: reply with exception (function code 0x01 per Modbus)
-                exceptionResponse(modbus.function, 0 /*broadcastFlag*/, MB_EXCEPTION_ILLEGAL_FUNCTION);
+                exceptionResponse(modbus.function, modbus.broadcastFlag, MB_EXCEPTION_ILLEGAL_FUNCTION);
                 break;
         }
         return;
@@ -236,10 +279,31 @@ void modbus_update(){
     return;
 }
 
+/**
+ * Sends a Modbus message using the provided buffer and size.
+ *
+ * @param buffer Pointer to the data buffer containing the Modbus message to be sent.
+ * @param size Size of the data buffer in bytes, including the message content.
+ *
+ * The function uses the `modbus_send_package_callback` callback to transmit the message.
+ * The callback must be set using `modbus_set_send_package_callback` before calling this function.
+ */
 void modbus_send(uint8_t* buffer, uint16_t size){
     if (modbus_send_package_callback) modbus_send_package_callback(buffer, size);
 }
 
+/**
+ * Constructs and sends a Modbus exception response frame.
+ *
+ * @param function The original Modbus function code that caused the exception.
+ * @param broadcastFlag Indicates if the message is a broadcast (1) or directed (0).
+ *                      No response is sent if broadcastFlag is 1.
+ * @param exception The exception code indicating the error type in the Modbus protocol.
+ *
+ * The function sets the most significant bit (MSB) of the function code to indicate
+ * an exception, writes the exception code into the response buffer, calculates the
+ * CRC for the response, and sends it using the configured send callback.
+ */
 void exceptionResponse(uint8_t function, uint8_t broadcastFlag, uint8_t  exception)
 {
     if (!broadcastFlag) { // don't respond if its a broadcast message

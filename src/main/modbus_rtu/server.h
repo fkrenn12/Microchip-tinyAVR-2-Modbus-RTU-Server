@@ -47,7 +47,7 @@ typedef struct {
 typedef struct _modbus{
     uint8_t  buffer[MODBUS_BUFFER_SIZE];
     uint16_t head;
-    uint16_t crc;
+    uint16_t crc_appended;
     uint8_t  updateFlag;
     uint16_t actual_size;
     uint8_t actual_id;
