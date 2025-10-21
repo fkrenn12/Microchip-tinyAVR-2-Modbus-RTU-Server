@@ -16,8 +16,6 @@
 extern "C" {
 #endif
 
-
-
 #define MODBUS_BUFFER_SIZE 256
 #define MODBUS_POS_ID 0 // position in the frame where the address starts
 #define MODBUS_POS_FUNCTION 1 // position in the frame where the frame size is stored
@@ -42,7 +40,7 @@ extern "C" {
 typedef void (*modbus_frame_callback_t)(uint8_t* frame, uint16_t len);
 typedef void (*update_callback_t)(void);
 
-typedef struct {
+typedef struct _register{
     uint16_t* registers;
     uint16_t count;
 } Registers;
