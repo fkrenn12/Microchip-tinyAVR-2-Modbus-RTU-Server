@@ -17,6 +17,11 @@
 extern "C" {
 #endif
 
+void update_peripheral(void);
+void update_input_discretes(void);
+void update_coils(void);
+void update_holding_registers(void);
+void init_peripheral(void);
 
 #ifdef __cplusplus
 }

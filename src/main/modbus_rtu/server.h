@@ -1,5 +1,6 @@
 #ifndef _MODBUS_SLAVE_H
 #define _MODBUS_SLAVE_H
+#pragma once
 /*
   Modbus Specifications and Implementation Guides
   
@@ -39,6 +40,11 @@ extern "C" {
 
 typedef void (*modbus_frame_callback_t)(uint8_t* frame, uint16_t len);
 typedef void (*update_callback_t)(void);
+
+typedef struct _register1{
+    uint16_t registers[32];
+    uint16_t count;
+} Registers1;
 
 typedef struct _register{
     uint16_t* registers;

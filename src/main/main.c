@@ -2,35 +2,28 @@
 #include "Arduino.h"
 #endif
 #include "main.h"
-
 ////////////////////////////////////////////////////////////////////////
 // GLOBAL USED VARIABLES
 ////////////////////////////////////////////////////////////////////////
-
 extern Configuration configuration;
 
-uint16_t config_input_discretes[] = INPUT_DISCRETES; // function 2 register array
+// rename to discrete_inputs
+uint16_t config_input_discretes[] = INPUT_DISCRETES; 
 uint16_t input_discretes[sizeof(config_input_discretes)/sizeof(uint16_t)];
 uint8_t numOfDiscreteInputs= sizeof(config_input_discretes)/sizeof(uint16_t);
 
-uint16_t config_coils[] = COILS; // function 5 register array
+uint16_t config_coils[] = COILS; 
 uint16_t coils[sizeof(config_coils)/sizeof(uint16_t)];
 uint8_t numOfCoils = sizeof(config_coils)/sizeof(uint16_t);
 
-uint16_t config_input_registers[] = INPUT_REGISTERS; // function 4 register array
+uint16_t config_input_registers[] = INPUT_REGISTERS; 
 uint16_t input_registers[sizeof(config_input_registers)/sizeof(uint16_t)]={0};
 uint8_t numOfInputRegisters = sizeof(config_input_registers)/sizeof(uint16_t);
 
-uint16_t config_holding_registers[] = HOLDING_REGISTERS; // function 3 register array
+uint16_t config_holding_registers[] = HOLDING_REGISTERS; 
 uint16_t holding_registers[sizeof(config_holding_registers)/sizeof(uint16_t)];
 uint8_t numOfHoldingRegisters = sizeof(config_holding_registers)/sizeof(uint16_t);
-
-/////////////////////////////////////////////////////////////
-void update_peripheral(void);
-void update_input_discretes(void);
-void update_coils(void);
-void update_holding_registers(void);
-void init_peripheral(void);
+////////////////////////////////////////////////////////////////////////
 
 // ISR for TCB0 compare
 ISR(TCB0_INT_vect)
@@ -42,61 +35,9 @@ ISR(TCB0_INT_vect)
 }
 
 void init_peripheral(void){
-    // Init coils
-    for (uint8_t i = 0; i < sizeof(config_coils)/sizeof(uint16_t); i++){
-       uint16_t config_coil = config_coils[i];
-       if ((uint8_t)(config_coil>>8) == PORTA_CODE) PORTA.DIRSET = (uint8_t)(config_coil & 0xFF); // Set PORTA coil pin as output
-       else if ((uint8_t)(config_coil>>8) == PORTB_CODE) PORTB.DIRSET = (uint8_t)(config_coil & 0xFF); // Set PORTB coil pin as output
-       #ifdef PORTC
-       else if ((uint8_t)(config_coil>>8) == PORTC_CODE) PORTC.DIRSET = (uint8_t)(config_coil & 0xFF); // Set PORTC coil pin as output
-       #endif
-       #ifdef PORTD
-       else if ((uint8_t)(config_coil>>8) == PORTD_CODE) PORTD.DIRSET = (uint8_t)(config_coil & 0xFF); // Set PORTD coil pin as output
-       #endif
-       #ifdef PORTE
-       else if ((uint8_t)(config_coil>>8) == PORTE_CODE) PORTE.DIRSET = (uint8_t)(config_coil & 0xFF); // Set PORTE coil pin as output
-       #endif
-       #ifdef PORTF
-       else if ((uint8_t)(config_coil>>8) == PORTF_CODE) PORTF.DIRSET = (uint8_t)(config_coil & 0xFF); // Set PORTF coil pin as output
-       #endif
-    }
-
-    // Init input discretes
-    for (uint8_t i = 0; i < sizeof(config_input_discretes)/sizeof(uint16_t); i++){
-        uint16_t config_input_discrete = config_input_discretes[i];
-        if ((uint8_t)(config_input_discrete>>8) == PORTA_CODE) PORTA.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTA input discrete pin as input
-        else if ((uint8_t)(config_input_discrete>>8) == PORTB_CODE) PORTB.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTB input discrete pin as input 
-        else if ((uint8_t)(config_input_discrete>>8) == PORTB_CODE) PORTB.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTB input discrete pin as input 
-        #ifdef PORTC
-        else if ((uint8_t)(config_input_discrete>>8) == PORTC_CODE) PORTC.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTC input discrete pin as input 
-        #endif
-        #ifdef PORTD
-        else if ((uint8_t)(config_input_discrete>>8) == PORTD_CODE) PORTD.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTD input discrete pin as input 
-        #endif
-        #ifdef PORTE
-        else if ((uint8_t)(config_input_discrete>>8) == PORTE_CODE) PORTE.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTE input discrete pin as input 
-        #endif
-        #ifdef PORTF
-        else if ((uint8_t)(config_input_discrete>>8) == PORTF_CODE) PORTF.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTF input discrete pin as input 
-        #endif
-    }
-
-    // Init holding registers
-    for (uint8_t i = 0; i < sizeof(config_holding_registers)/sizeof(uint16_t); i++){
-        const uint16_t config_holding_register = config_holding_registers[i];
-        const uint8_t code = (uint8_t)(config_holding_register >> 8);
-        if (code == PWM_CODE){
-            const uint8_t channel = (uint8_t)(config_holding_register & 0xFF);
-            pwm_set_frequency(DEFAULT_PWM_FREQUENCY);
-            if (channel==0){
-                holding_registers[i] = DEFAULT_PWM_FREQUENCY;               
-            }
-            if (channel>0){
-                pwm_set_duty(channel, DEFAULT_PWM_DUTY);
-                holding_registers[i] = DEFAULT_PWM_DUTY;
-            }
-        }
-    }
+    init_coils(config_coils,sizeof(config_coils));
+    init_discrete_inputs(config_input_discretes,sizeof(config_input_discretes));
+    init_holding_registers(config_holding_registers,sizeof(config_holding_registers), holding_registers);   
 }
 
 void update_holding_registers(void){
@@ -265,6 +206,7 @@ void update_configuration(void){
     // reinit uart with new baudrate
     // init_uart0(configuration.uart_baudrate);  // unlikely  do not work !!
 }
+
 #ifndef ARDUINO
     int main() {
 #else

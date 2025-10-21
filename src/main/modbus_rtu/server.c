@@ -1,5 +1,13 @@
 #include "server.h"
 
+volatile Registers1 test= {
+    .registers = {0},
+    .count = 10
+};
+
+#if (INTERNAL_SRAM_SIZE>1000)
+#endif
+
 Callback callback = {
     .send_package = (modbus_frame_callback_t)0,
     .update_holding_registers = (update_callback_t)0,

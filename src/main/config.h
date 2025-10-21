@@ -53,7 +53,7 @@
 // BE CAREFULLY - do not define multiple function on same io port pin
 
 // define single pins for reading the level (0 or 1)
-#define INPUT_DISCRETES {PA3}  // 
+#define INPUT_DISCRETES {PA3}  
 // define single pins for writing the level (0 or 1)
 #define COILS {PB3}
 // define holding registers

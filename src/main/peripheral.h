@@ -1,8 +1,9 @@
 #include <avr/io.h>
 #include "inttypes.h"
 #include "defines.h"
-#ifndef _PERIPHERAL_H
-#define _PERIPHERAL_H
+#include "config.h"
+#pragma once
+
 #if defined (__AVR_ATtiny424__) || (__AVR_ATtiny824__) || defined(__AVR_ATtiny1624__) || defined(__AVR_ATtiny3224__)
 #define DEVICE_PIN14
 #define ATTINY
@@ -73,6 +74,9 @@
 #define PB7 (PORTB_CODE<<8)+PIN7_bm
 #define RC4 (PORTC_CODE<<8)+PIN4_bm
 #define RC5 (PORTC_CODE<<8)+PIN5_bm
-
 #endif
-#endif // _PERIPHERAL_H
+
+void init_peripheral(void);
+void init_coils(uint16_t* config_coils, uint8_t sizeOfConfigCoils);
+void init_discrete_inputs(uint16_t* config_input_discretes, uint8_t sizeOfConfigDiscretesInputs);
+void init_holding_registers(uint16_t* config_holding_registers, uint8_t sizeOfConfigHoldingRegisters, uint16_t* holding_registers);
