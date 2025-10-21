@@ -39,10 +39,22 @@ extern "C" {
 #define MODBUS_ISHOLDING 0
 #define MODBUS_ISCONFIG 1
 
+typedef void (*modbus_frame_callback_t)(uint8_t* frame, uint16_t len);
+typedef void (*update_callback_t)(void);
+
 typedef struct {
     uint16_t* registers;
     uint16_t count;
 } Registers;
+
+typedef struct _callback{
+  modbus_frame_callback_t send_package;
+  update_callback_t update_holding_registers;
+  update_callback_t update_input_registers;
+  update_callback_t update_input_discretes;
+  update_callback_t update_coils;
+  update_callback_t update_configuration;
+}Callback;
 
 typedef struct _modbus{
     uint8_t  buffer[MODBUS_BUFFER_SIZE];
@@ -63,8 +75,7 @@ typedef struct _modbus{
     Registers config; 
 } Modbus;
 
-typedef void (*modbus_frame_callback_t)(uint8_t* frame, uint16_t len);
-typedef void (*update_callback_t)(void);
+
 
 void modbus_send(uint8_t* buffer, uint16_t len);
 

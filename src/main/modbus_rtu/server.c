@@ -1,11 +1,13 @@
 #include "server.h"
 
-modbus_frame_callback_t modbus_send_package_callback = (modbus_frame_callback_t)0;
-update_callback_t update_holding_registers_callback = (update_callback_t)0;
-update_callback_t update_coils_callback = (update_callback_t)0;
-update_callback_t update_input_registers_callback = (update_callback_t)0;
-update_callback_t update_input_discretes_callback = (update_callback_t)0;
-update_callback_t update_configuration_callback = (update_callback_t)0;
+Callback callback = {
+    .send_package = (modbus_frame_callback_t)0,
+    .update_holding_registers = (update_callback_t)0,
+    .update_coils = (update_callback_t)0,
+    .update_input_registers = (update_callback_t)0,
+    .update_input_discretes = (update_callback_t)0,
+    .update_configuration = (update_callback_t)0
+};
 
 Modbus modbus = {
     .buffer = {0},
@@ -180,6 +182,7 @@ void modbus_set_input_registers(uint16_t* registers, uint16_t count){
     modbus.input.registers = registers;
     modbus.input.count = count;
 }
+
 void modbus_set_discrete_inputs_registers(uint16_t* registers, uint16_t count){
     modbus.discretes.registers = registers;
     modbus.discretes.count = count;
@@ -203,23 +206,23 @@ void modbus_set_configuration_registers(uint16_t* registers, uint16_t count){
  * with various communication mediums (e.g., UART, RS485). Users must ensure the callback is implemented
  * and registered before attempting to send packets.
  */
-void modbus_set_send_package_callback(modbus_frame_callback_t callback){
-    modbus_send_package_callback = callback;
+void modbus_set_send_package_callback(modbus_frame_callback_t _callback){
+    callback.send_package = _callback;
 }
-void modbus_set_update_holding_registers_callback(update_callback_t callback){
-    update_holding_registers_callback = callback;
+void modbus_set_update_holding_registers_callback(update_callback_t _callback){
+    callback.update_holding_registers = _callback;
 }
-void modbus_set_update_input_registers_callback(update_callback_t callback){
-    update_input_registers_callback = callback;
+void modbus_set_update_input_registers_callback(update_callback_t _callback){
+    callback.update_input_registers = _callback;
 }
-void modbus_set_update_input_discretes_callback(update_callback_t callback){
-    update_input_discretes_callback = callback;
+void modbus_set_update_input_discretes_callback(update_callback_t _callback){
+    callback.update_input_discretes = _callback;
 }
-void modbus_set_update_coils_callback(update_callback_t callback){
-    update_coils_callback = callback;
+void modbus_set_update_coils_callback(update_callback_t _callback){
+    callback.update_coils = _callback;
 }
-void modbus_set_update_configuration_callback(update_callback_t callback){
-    update_configuration_callback = callback;
+void modbus_set_update_configuration_callback(update_callback_t _callback){
+    callback.update_configuration = _callback;
 }
 
 void modbus_update(){
@@ -232,7 +235,7 @@ void modbus_update(){
 
             case MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS:
                 modbus_write_multiple_holding_registers(MODBUS_ISCONFIG);
-                if (update_configuration_callback) update_configuration_callback();
+                if (callback.update_configuration) callback.update_configuration();
                 break;
             default:
                 // Unknown configuration function: reply with exception (function code 0x01 per Modbus)
@@ -250,29 +253,29 @@ void modbus_update(){
                 break;
             case MB_FUNCTION_WRITE_SINGLE_COIL:
                 modbus_write_single_coil();
-                if (update_coils_callback) update_coils_callback();
+                if (callback.update_coils) callback.update_coils();
                 break;
             case MB_FUNCTION_WRITE_MULTIPLE_COILS:
                 modbus_write_multiple_coils();
-                if (update_coils_callback) update_coils_callback();
+                if (callback.update_coils) callback.update_coils();
                 break;
             case MB_FUNCTION_READ_HOLDING_REGISTERS:
                 if (!modbus.broadcastFlag) modbus_read_holding_registers( MODBUS_ISHOLDING);
                 break;
             case MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER:
                 modbus_write_single_holding_register();
-                if (update_holding_registers_callback) update_holding_registers_callback();
+                if (callback.update_holding_registers) callback.update_holding_registers();
                 break;
             case MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS:
                 modbus_write_multiple_holding_registers(MODBUS_ISHOLDING);
-                if (update_holding_registers_callback) update_holding_registers_callback();
+                if (callback.update_holding_registers) callback.update_holding_registers();
                 break;
             case MB_FUNCTION_READ_DISCRETE_INPUTS:
-                if (update_input_discretes_callback) update_input_discretes_callback();
+                if (callback.update_input_discretes) callback.update_input_discretes();
                 if (!modbus.broadcastFlag) modebus_read_discrete_inputs();
                 break;
             case MB_FUNCTION_READ_INPUT_REGISTERS:
-                if (update_input_registers_callback) update_input_registers_callback();
+                if (callback.update_input_registers) callback.update_input_registers();
                 if (!modbus.broadcastFlag) modbus_read_input_registers();
                 break;
             default:
@@ -293,7 +296,7 @@ void modbus_update(){
  * The callback must be set using `modbus_set_send_package_callback` before calling this function.
  */
 void modbus_send(uint8_t* buffer, uint16_t size){
-    if (modbus_send_package_callback) modbus_send_package_callback(buffer, size);
+    if (callback.send_package) callback.send_package(buffer, size);
 }
 
 /**
