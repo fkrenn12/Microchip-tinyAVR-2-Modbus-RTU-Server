@@ -1,7 +1,11 @@
 #include "server.h"
-#include <avr/io.h>
 
 modbus_frame_callback_t modbus_send_package_callback = (modbus_frame_callback_t)0;
+update_callback_t update_holding_registers_callback = (update_callback_t)0;
+update_callback_t update_coils_callback = (update_callback_t)0;
+update_callback_t update_input_registers_callback = (update_callback_t)0;
+update_callback_t update_input_discretes_callback = (update_callback_t)0;
+update_callback_t update_configuration_callback = (update_callback_t)0;
 
 Modbus modbus = {
     .buffer = {0},
@@ -79,28 +83,6 @@ uint16_t modbus_output_value() {
 // protocol data unit (PDU) quantity extraction helper
 uint16_t modbus_quantity_of_registers() {
     return (uint16_t)(((uint16_t)modbus.buffer[MODBUS_POS_PDU + 2] << 8) | (uint16_t)modbus.buffer[MODBUS_POS_PDU + 3]);
-}
-
-uint8_t modbus_need_refresh_discrete_inputs(){
-    const uint8_t mb_function = (uint8_t)modbus.buffer[MODBUS_POS_FUNCTION];
-    return  (uint8_t)(mb_function == MB_FUNCTION_READ_DISCRETE_INPUTS);
-    } 
-
-uint8_t modbus_need_update_configuration(){
-    const uint8_t mb_function = (uint8_t)modbus.buffer[MODBUS_POS_FUNCTION];
-    const uint8_t mb_id = (uint8_t)modbus.buffer[MODBUS_POS_ID];
-    return (uint8_t)((mb_id == MODBUS_CONFIGURATION_ID) && mb_function==MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS);
-}
-uint8_t modbus_need_update_holding_registers(){
-    const uint8_t mb_function = (uint8_t)modbus.buffer[MODBUS_POS_FUNCTION];
-    const uint8_t mb_id = (uint8_t)modbus.buffer[MODBUS_POS_ID];
-    return (uint8_t)((mb_id == modbus.id ) && ((mb_function == MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS) || (mb_function == (MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER))));
-}
-
-uint8_t modbus_need_update_coils(){
-    const uint8_t mb_function = (uint8_t)modbus.buffer[MODBUS_POS_FUNCTION];
-    const uint8_t mb_id = (uint8_t)modbus.buffer[MODBUS_POS_ID];
-    return (uint8_t)((mb_id == modbus.id) && ((mb_function == MB_FUNCTION_WRITE_MULTIPLE_COILS) || (mb_function == MB_FUNCTION_WRITE_SINGLE_COIL)));
 }
 
 /**
@@ -185,8 +167,8 @@ uint8_t modbus_need_update(){
     return state;
 }
 
-void modbus_set_id(uint8_t new_id){
-    modbus.id = new_id;
+void modbus_set_id(uint8_t id){
+    modbus.id = id;
 }
 
 void modbus_set_coils_registers(uint16_t* registers, uint16_t count){
@@ -224,6 +206,21 @@ void modbus_set_configuration_registers(uint16_t* registers, uint16_t count){
 void modbus_set_send_package_callback(modbus_frame_callback_t callback){
     modbus_send_package_callback = callback;
 }
+void modbus_set_update_holding_registers_callback(update_callback_t callback){
+    update_holding_registers_callback = callback;
+}
+void modbus_set_update_input_registers_callback(update_callback_t callback){
+    update_input_registers_callback = callback;
+}
+void modbus_set_update_input_discretes_callback(update_callback_t callback){
+    update_input_discretes_callback = callback;
+}
+void modbus_set_update_coils_callback(update_callback_t callback){
+    update_coils_callback = callback;
+}
+void modbus_set_update_configuration_callback(update_callback_t callback){
+    update_configuration_callback = callback;
+}
 
 void modbus_update(){
     if (modbus.configFlag){
@@ -235,6 +232,7 @@ void modbus_update(){
 
             case MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS:
                 modbus_write_multiple_holding_registers(MODBUS_ISCONFIG);
+                if (update_configuration_callback) update_configuration_callback();
                 break;
             default:
                 // Unknown configuration function: reply with exception (function code 0x01 per Modbus)
@@ -252,23 +250,29 @@ void modbus_update(){
                 break;
             case MB_FUNCTION_WRITE_SINGLE_COIL:
                 modbus_write_single_coil();
+                if (update_coils_callback) update_coils_callback();
                 break;
             case MB_FUNCTION_WRITE_MULTIPLE_COILS:
                 modbus_write_multiple_coils();
+                if (update_coils_callback) update_coils_callback();
                 break;
             case MB_FUNCTION_READ_HOLDING_REGISTERS:
                 if (!modbus.broadcastFlag) modbus_read_holding_registers( MODBUS_ISHOLDING);
                 break;
             case MB_FUNCTION_WRITE_SINGLE_HOLDING_REGISTER:
                 modbus_write_single_holding_register();
+                if (update_holding_registers_callback) update_holding_registers_callback();
                 break;
             case MB_FUNCTION_WRITE_MULTIPLE_HOLDING_REGISTERS:
                 modbus_write_multiple_holding_registers(MODBUS_ISHOLDING);
+                if (update_holding_registers_callback) update_holding_registers_callback();
                 break;
             case MB_FUNCTION_READ_DISCRETE_INPUTS:
+                if (update_input_discretes_callback) update_input_discretes_callback();
                 if (!modbus.broadcastFlag) modebus_read_discrete_inputs();
                 break;
             case MB_FUNCTION_READ_INPUT_REGISTERS:
+                if (update_input_registers_callback) update_input_registers_callback();
                 if (!modbus.broadcastFlag) modbus_read_input_registers();
                 break;
             default:

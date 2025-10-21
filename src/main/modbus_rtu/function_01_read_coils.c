@@ -31,7 +31,7 @@ void modbus_read_coils()
     // Compute response payload size in bytes (ceil(quantity / 8))
     const uint8_t byteCount = (uint8_t)((numOfRegisters + 7u) >> 3);
     // Build response: ID, FUNC, BYTE_CNT, DATA..., CRC
-    modbus.buffer[MODBUS_POS_PDU]     = byteCount;
+    modbus.buffer[MODBUS_POS_PDU] = byteCount;
     uint8_t outIndex = MODBUS_POS_FUNCTION + 2; // index 3
     uint16_t remaining = numOfRegisters;
     uint16_t srcIndex  = startingAddress;

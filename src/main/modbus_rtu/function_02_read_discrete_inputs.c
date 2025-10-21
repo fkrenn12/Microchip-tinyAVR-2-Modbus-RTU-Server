@@ -43,7 +43,7 @@ void modebus_read_discrete_inputs()
 
     // Build response
     modbus.buffer[MODBUS_POS_FUNCTION] = MB_FUNCTION_READ_DISCRETE_INPUTS;
-    modbus.buffer[MODBUS_POS_PDU]     = byteCount;           // byte count at position 2 for read responses
+    modbus.buffer[MODBUS_POS_PDU] = byteCount;           // byte count at position 2 for read responses
     uint8_t outIndex = MODBUS_POS_FUNCTION + 2;       // start writing packed data at frame[3]
 
     uint16_t remaining = numOfRegisters;

@@ -9,27 +9,21 @@
 
 extern Configuration configuration;
 
-#ifdef INPUT_DISCRETES
 uint16_t config_input_discretes[] = INPUT_DISCRETES; // function 2 register array
 uint16_t input_discretes[sizeof(config_input_discretes)/sizeof(uint16_t)];
 uint8_t numOfDiscreteInputs= sizeof(config_input_discretes)/sizeof(uint16_t);
-#endif
-#ifdef COILS
+
 uint16_t config_coils[] = COILS; // function 5 register array
 uint16_t coils[sizeof(config_coils)/sizeof(uint16_t)];
 uint8_t numOfCoils = sizeof(config_coils)/sizeof(uint16_t);
-#endif
-#ifdef INPUT_REGISTERS
+
 uint16_t config_input_registers[] = INPUT_REGISTERS; // function 4 register array
 uint16_t input_registers[sizeof(config_input_registers)/sizeof(uint16_t)]={0};
 uint8_t numOfInputRegisters = sizeof(config_input_registers)/sizeof(uint16_t);
-#endif
-#ifdef HOLDING_REGISTERS
+
 uint16_t config_holding_registers[] = HOLDING_REGISTERS; // function 3 register array
 uint16_t holding_registers[sizeof(config_holding_registers)/sizeof(uint16_t)];
 uint8_t numOfHoldingRegisters = sizeof(config_holding_registers)/sizeof(uint16_t);
-#endif
-
 
 /////////////////////////////////////////////////////////////
 void update_peripheral(void);
@@ -47,17 +41,8 @@ ISR(TCB0_INT_vect)
   modbus_package_ready();
 }
 
-void system_reset_via_rstctrl(void) {
-    cli();
-    // Write signature + SWRR (software reset request)
-    // Datasheet: write '0x1D' to the upper bits with SWRR bit set.
-    RSTCTRL.SWRR = RSTCTRL_SWRE_bm; // Some MCUs name it SWRE/SWRST; check your device header
-    for (;;) { /* wait for reset */ }
-}
-
 void init_peripheral(void){
     // Init coils
-    #ifdef COILS
     for (uint8_t i = 0; i < sizeof(config_coils)/sizeof(uint16_t); i++){
        uint16_t config_coil = config_coils[i];
        if ((uint8_t)(config_coil>>8) == PORTA_CODE) PORTA.DIRSET = (uint8_t)(config_coil & 0xFF); // Set PORTA coil pin as output
@@ -75,9 +60,8 @@ void init_peripheral(void){
        else if ((uint8_t)(config_coil>>8) == PORTF_CODE) PORTF.DIRSET = (uint8_t)(config_coil & 0xFF); // Set PORTF coil pin as output
        #endif
     }
-    #endif
+
     // Init input discretes
-    #ifdef INPUT_DISCRETES
     for (uint8_t i = 0; i < sizeof(config_input_discretes)/sizeof(uint16_t); i++){
         uint16_t config_input_discrete = config_input_discretes[i];
         if ((uint8_t)(config_input_discrete>>8) == PORTA_CODE) PORTA.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTA input discrete pin as input
@@ -96,10 +80,8 @@ void init_peripheral(void){
         else if ((uint8_t)(config_input_discrete>>8) == PORTF_CODE) PORTF.DIRCLR = (uint8_t)(config_input_discrete & 0xFF); // Set PORTF input discrete pin as input 
         #endif
     }
-    #endif
 
     // Init holding registers
-    #ifdef HOLDING_REGISTERS
     for (uint8_t i = 0; i < sizeof(config_holding_registers)/sizeof(uint16_t); i++){
         const uint16_t config_holding_register = config_holding_registers[i];
         const uint8_t code = (uint8_t)(config_holding_register >> 8);
@@ -115,11 +97,8 @@ void init_peripheral(void){
             }
         }
     }
-    #endif
-
 }
 
-#ifdef HOLDING_REGISTERS
 void update_holding_registers(void){
     for (uint8_t i = 0; i < sizeof(config_holding_registers)/sizeof(uint16_t); i++){
         const uint16_t config_holding_register = config_holding_registers[i];
@@ -137,11 +116,9 @@ void update_holding_registers(void){
 }
 
 void update_input_registers(void){
-    adc_sequencer();
+  
 }
 
-#endif
-#ifdef COILS
 void update_coils(void)
 {
     const uint8_t count = (uint8_t)(sizeof(config_coils) / sizeof(uint16_t));
@@ -221,9 +198,7 @@ void update_coils(void)
         }
     }
 }
-#endif
 
-#ifdef INPUT_DISCRETES
 void update_input_discretes(void)
 {
     // Update input discretes
@@ -277,103 +252,62 @@ void update_input_discretes(void)
         input_discretes[i] = pin_val;
     }
 }
-#endif
 
+void update_configuration(void){
+    // store modbus id and baudrate in eeprom configuration registers
+    const uint8_t id=(uint8_t)(configuration.registers[CFG_MODBUS_ID] & 0xFF);
+    configuration.uart_baudrate=(uint32_t)(configuration.registers[CFG_UART_BAUDRATE])*100;
+    modbus_set_id(id);
+    store_modbus_id_to_eeprom(id);
+    store_baudrate_to_eeprom(configuration.uart_baudrate);
+    _delay_ms(10);
+    asm volatile("jmp 0"); // we have to jump to restart
+    // reinit uart with new baudrate
+    // init_uart0(configuration.uart_baudrate);  // unlikely  do not work !!
+}
 #ifndef ARDUINO
     int main() {
 #else
     void loop(){}
     void setup(){
 #endif
-    #if (RESET_ENABLE_PIN > 0)
-        // set as input enable pullup
-        // check RESET_ENABLE_PIN should be done here !!
-        RESET_ENABLE_PORT.DIRCLR = RESET_ENABLE_PIN;
-        if (RESET_ENABLE_PIN==PIN0_bm) RESET_ENABLE_PORT.PIN0CTRL = PORT_PULLUPEN_bm; 
-        else if (RESET_ENABLE_PIN==PIN1_bm) RESET_ENABLE_PORT.PIN1CTRL = PORT_PULLUPEN_bm; 
-        else if (RESET_ENABLE_PIN==PIN2_bm) RESET_ENABLE_PORT.PIN2CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN3_bm) RESET_ENABLE_PORT.PIN3CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN4_bm) RESET_ENABLE_PORT.PIN4CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN5_bm) RESET_ENABLE_PORT.PIN5CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN6_bm) RESET_ENABLE_PORT.PIN6CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN7_bm) RESET_ENABLE_PORT.PIN7CTRL = PORT_PULLUPEN_bm;
-        _delay_ms(1);
-        // read status
-        if (RESET_ENABLE_PORT.IN & RESET_ENABLE_PIN == 0) {
-            // low detected -> clear baudrate (= set to 0xffffff)
-            eeprom_write_byte(EEPROM_OFFSET_BAUDRATE,0xFF); 
-            eeprom_write_byte(EEPROM_OFFSET_BAUDRATE+1,0xFF); 
-            // wait releasing 
-            _delay_ms(10);
-            while (RESET_ENABLE_PORT.IN & RESET_ENABLE_PIN == 0);
-            _delay_ms(100);
-            // reset
-            asm volatile ("jmp 0");
-        }
-        RESET_ENABLE_PORT.PIN0CTRL = 0;
-        RESET_ENABLE_PORT.PIN1CTRL = 0;
-        RESET_ENABLE_PORT.PIN2CTRL = 0;
-        RESET_ENABLE_PORT.PIN3CTRL = 0;
-        RESET_ENABLE_PORT.PIN4CTRL = 0;
-        RESET_ENABLE_PORT.PIN5CTRL = 0;
-        RESET_ENABLE_PORT.PIN6CTRL = 0;
-        RESET_ENABLE_PORT.PIN7CTRL = 0;
-    #endif
+    handle_reset_enable_pin(); // will restart here if reset pin activated and set to high
     // configure alt uart pins    
     PORTMUX.USARTROUTEA = PORTMUX_USART1_NONE_gc | PORTMUX_USART0_ALT1_gc;
     const uint8_t id = load_modbus_id_from_eeprom();
-    modbus_set_id(id);
     configuration.uart_baudrate = load_baudrate_from_eeprom();
+    configuration.registers[CFG_MODBUS_ID] = (uint16_t)id;
+    configuration.registers[CFG_UART_BAUDRATE] = (uint16_t)(configuration.uart_baudrate/100);
+    modbus_set_id(id);
     modbus_set_send_package_callback(uartSendPacket);
-    // transfer registers to modbus
+    // link registers to modbus
     modbus_set_coils_registers(coils, numOfCoils);
     modbus_set_input_registers(input_registers, numOfInputRegisters);
     modbus_set_discrete_inputs_registers(input_discretes, numOfDiscreteInputs);
     modbus_set_holding_registers(holding_registers, numOfHoldingRegisters);
-    configuration.registers[CFG_MODBUS_ID] = (uint16_t)id;
-    configuration.registers[CFG_UART_BAUDRATE] = (uint16_t)(configuration.uart_baudrate/100);
     modbus_set_configuration_registers(configuration.registers, configuration.sizeOfConfigurationRegisters);
-    
-    uint16_t T1_5; // 1.5 charcter time
-    uint8_t lowLatency = MODBUS_LOW_LATENCY_MODE;
-    if (lowLatency && configuration.uart_baudrate >= 115200){
-        T1_5 = 75; // not defined in modbus standart
-    } else if (configuration.uart_baudrate > 19200){
-        T1_5 = 750; // defined in modbus standart
-    } else{
-        T1_5 = 15000000/configuration.uart_baudrate; // // defined in modbus standart 1.5T = 1T * 1.5
-    }
-    
-    // read from eeprom
+    // set callbacks    
+    modbus_set_update_coils_callback(update_coils);
+    modbus_set_update_configuration_callback(update_configuration);
+    modbus_set_update_holding_registers_callback(update_holding_registers);
+    modbus_set_update_input_registers_callback(update_input_registers);
+    modbus_set_update_input_discretes_callback(update_input_discretes);
+   
     init_peripheral();
     init_adc();
-    init_tcb0_us(T1_5);
+    init_tcb0_us(T1_5us(configuration.uart_baudrate));
     init_uart0(configuration.uart_baudrate);
 
     sei();
     
     while (1){
+        adc_sequencer();
+        // because modbus_package_ready(); is called from ISR (TCB_CAPT)
+        // we must disable appropiate interrupt temporarely
         TCB0.INTCTRL &= ~TCB_CAPT_bm; // disable tcb interrupt
         const uint8_t updateFlag = modbus_need_update();
         TCB0.INTCTRL = TCB_CAPT_bm; // enable tcb interrupt
-        update_input_registers(); // update input registers continuously
         if (!updateFlag) continue;
-        if (modbus_need_refresh_discrete_inputs()) update_input_discretes();
         modbus_update();
-        if (modbus_need_update_configuration()){
-            // store modbus id and baudrate in eeprom configuration registers
-            const uint8_t id=(uint8_t)(configuration.registers[CFG_MODBUS_ID] & 0xFF);
-            configuration.uart_baudrate=(uint32_t)(configuration.registers[CFG_UART_BAUDRATE])*100;
-            modbus_set_id(id);
-            store_modbus_id_to_eeprom(id);
-            store_baudrate_to_eeprom(configuration.uart_baudrate);
-            _delay_ms(10);
-            asm volatile("jmp 0"); // we have to jump to restart
-            // reinit uart with new baudrate
-            // system_reset_via_rstctrl();  // unlikely  do not work !!
-            // init_uart0(configuration.uart_baudrate);  // unlikely  do not work !!
-        }
-        else if (modbus_need_update_holding_registers()) update_holding_registers();
-        else if (modbus_need_update_coils()) update_coils();
     }
 }

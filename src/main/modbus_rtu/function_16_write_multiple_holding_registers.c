@@ -32,8 +32,8 @@ void modbus_write_multiple_holding_registers(uint8_t isConfig)
     uint16_t* registers = (isConfig)?modbus.config.registers:modbus.holding.registers;
     // Parse request
     const uint16_t startingAddress = modbus_output_address() - offset;
-    const uint16_t registerCount  = modbus_quantity_of_registers();
-    const uint8_t  byteCount      = modbus.buffer[MODBUS_POS_BYTECOUNT];
+    const uint16_t registerCount = modbus_quantity_of_registers();
+    const uint8_t  byteCount = modbus.buffer[MODBUS_POS_BYTECOUNT];
     const uint16_t expectedBytes = (uint16_t)(registerCount * 2u);
     const uint16_t expectedFrame = (uint16_t)(9u + (uint16_t)byteCount);
     // Minimal fixed part is 9 bytes before CRC depends on byte count; validate later precisely.

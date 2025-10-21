@@ -57,4 +57,16 @@ void uartSendPacket(uint8_t* buffer , uint16_t len)
     USART0.CTRLB |= USART_RXEN_bm; // Re-enable receiver
 }
 
+uint16_t T1_5us(uint32_t baudrate){
+  uint16_t T1_5 = 750; // default
+  uint8_t lowLatency = MODBUS_LOW_LATENCY_MODE;
+  if (lowLatency && baudrate >= 115200){
+      T1_5 = 75; // not defined in modbus standart
+  } else if (baudrate > 19200){
+      T1_5 = 750; // defined in modbus standart
+  } else{
+      T1_5 = 15000000/baudrate; // // defined in modbus standart 1.5T = 1T * 1.5
+  }
+  return T1_5;
+}
 

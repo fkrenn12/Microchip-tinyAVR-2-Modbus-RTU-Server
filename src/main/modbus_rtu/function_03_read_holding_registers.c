@@ -43,7 +43,7 @@ void modbus_read_holding_registers(uint8_t isConfig)
     // Build response
     const uint8_t byteCount = (uint8_t)(numOfRegisters * 2u);
    
-    modbus.buffer[MODBUS_POS_PDU]     = byteCount;
+    modbus.buffer[MODBUS_POS_PDU] = byteCount;
 
     uint8_t out = (uint8_t)(MODBUS_POS_FUNCTION + 2); // start of data (index 3)
     uint16_t idx = startingAddress;

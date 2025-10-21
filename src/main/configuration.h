@@ -4,6 +4,7 @@
 
 #include <inttypes.h>
 #include "defines.h"
+#include <util/delay.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,6 +34,7 @@ void store_modbus_id_to_eeprom(uint8_t modbus_id);
 void store_modbus_server_name_to_eeprom(const uint8_t* name);
 
 void eeprom_erase(void);
+void handle_reset_enable_pin(void);
 
 #ifdef __cplusplus
 }
