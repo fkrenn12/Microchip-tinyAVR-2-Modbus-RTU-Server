@@ -1,12 +1,12 @@
 ## Overview
-## ![modbus logo](documents/modbus-logo.png) RTU Server  
+## ![modbus logo](resources/modbus-logo.png) RTU Server  
  
-## ![microchip](documents/microchip-logo.png) tinyAVR® 2 Microcontroller Family  
-## Build with Platformio ![platformio logo](documents/platformio-logo.png) or MPLAB-X  ![mplabx logo](documents/mplabx-logo.png) 
+## ![microchip](resources/microchip-logo.png) tinyAVR® 2 Microcontroller Family  
+## Build with Platformio ![platformio logo](resources/platformio-logo.png) or MPLAB-X  ![mplabx logo](resources/mplabx-logo.png) 
 ## Overview
 Originally, the idea comes from [this repository](https://github.com/angeloc/simplemodbusng). However, if you compare the two projects, you will notice that there are not many similarities left. Nevertheless, I wanted to mention what inspired me.  
 This is not a library for modbus, but it is a ready to use application with modbus support for tinyAVR's.  
-[The tinyAVR® 2 microcontroller family](https://github.com/fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server\/blob\/main\/documents\/AN3456-Getting-Started-with-tinyAVR-2-Family-DS00003456A.pdf) is cost-effective and available in several variants with different memory sizes (4 KB–32 KB) and pin counts (14–24). The generated machine code fits into the microcontroller with 8K program memory.
+[The tinyAVR® 2 microcontroller family](https://github.com/fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server\/blob\/main\/resources\/AN3456-Getting-Started-with-tinyAVR-2-Family-DS00003456A.pdf) is cost-effective and available in several variants with different memory sizes (4 KB–32 KB) and pin counts (14–24). The generated machine code fits into the microcontroller with 8K program memory.
 The code is written in C and designed to be compiled with VSCode + PlatformIO or MPLABX IDE (XC8-compiler)
 ## Features
 ### 🚀  Supported MODBUS Data model objects 🚀 
@@ -25,7 +25,7 @@ The code is written in C and designed to be compiled with VSCode + PlatformIO or
 ⭐ 15 \- Write Multiple Coils  
 ⭐ 16 \- Write Multiple Registers  
 
-Review the functions here: [MODBUS specification](https://github.com/fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server/blob/main/documents/Modbus_Application_Guide.pdf).
+Review the functions here: [MODBUS specification](https://github.com/fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server/blob/main/resources/Modbus_Application_Guide.pdf).
 
 
 ### 🚀 Supported peripheral functionality 🚀

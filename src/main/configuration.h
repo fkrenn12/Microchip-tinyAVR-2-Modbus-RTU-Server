@@ -1,10 +1,13 @@
-// C
-#ifndef EEPROM_CONFIG_H
-#define EEPROM_CONFIG_H
+#pragma once
 
 #include <inttypes.h>
 #include "defines.h"
 #include <util/delay.h>
+#include <avr/eeprom.h>   
+#include "config.h" 
+#include "modbus_rtu/server.h"  
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,9 +38,10 @@ void store_modbus_server_name_to_eeprom(const uint8_t* name);
 
 void eeprom_erase(void);
 void handle_reset_enable_pin(void);
+void init_configuration(void);
+void update_configuration(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // EEPROM_CONFIG_H

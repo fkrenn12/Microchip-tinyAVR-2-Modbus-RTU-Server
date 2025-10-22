@@ -76,7 +76,3 @@
 #define RC5 (PORTC_CODE<<8)+PIN5_bm
 #endif
 
-void init_peripheral(void);
-void init_coils(uint16_t* config_coils, uint8_t sizeOfConfigCoils);
-void init_discrete_inputs(uint16_t* config_input_discretes, uint8_t sizeOfConfigDiscretesInputs);
-void init_holding_registers(uint16_t* config_holding_registers, uint8_t sizeOfConfigHoldingRegisters, uint16_t* holding_registers);

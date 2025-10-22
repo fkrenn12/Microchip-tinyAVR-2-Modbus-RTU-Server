@@ -1,10 +1,5 @@
 #include "server.h"
 
-volatile Registers1 test= {
-    .registers = {0},
-    .count = 10
-};
-
 #if (INTERNAL_SRAM_SIZE>1000)
 #endif
 

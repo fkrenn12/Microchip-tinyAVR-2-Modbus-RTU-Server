@@ -1,6 +1,7 @@
 #include "adc.h"
 // #include <Arduino.h>
 // #define DEBUG_ADC_READINGS 
+extern ModbusAppRegisters g_registers;
 
 void init_adc() { 
   // Serial1.print("ADC Single initalisation");
@@ -101,20 +102,20 @@ void start_adc(uint16_t config)
 void adc_sequencer(void){
     static uint8_t index_input_register = 0;
     static uint8_t initial_start_adc = 0;
-    if (numOfInputRegisters > 0u) {
+    if (g_registers.numOfInputRegisters > 0u) {
         // Kick the first conversion once
         if (!initial_start_adc) {
             initial_start_adc = 1u;
             // Clear any stale flag before starting
             ADC0.INTFLAGS = ADC_RESRDY_bm; // write-1-to-clear
-            start_adc(config_input_registers[index_input_register]);
+            start_adc(g_registers.config_input_registers[index_input_register]);
         }
 
         // Wait for a completed conversion and then service it
         if ((ADC0.INTFLAGS & ADC_RESRDY_bm) != 0u) {
             // Latch result atomically and clear RESRDY
             cli();
-            input_registers[index_input_register] = ADC0.RESULT;
+            g_registers.input_registers[index_input_register] = ADC0.RESULT;
             sei();
             
             #ifdef DEBUG_ADC_READINGS
@@ -129,13 +130,13 @@ void adc_sequencer(void){
             #endif
             
             // Advance channel index
-            if (++index_input_register >= numOfInputRegisters) {
+            if (++index_input_register >= g_registers.numOfInputRegisters) {
                 index_input_register = 0u;
             }
 
             // Start next conversion:
             ADC0.INTFLAGS = ADC_RESRDY_bm; // ensure clean flag before new start
-            start_adc(config_input_registers[index_input_register]);
+            start_adc(g_registers.config_input_registers[index_input_register]);
         }
     }
 }   

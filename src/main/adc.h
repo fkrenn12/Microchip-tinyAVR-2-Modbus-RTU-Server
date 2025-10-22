@@ -11,6 +11,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include "config.h"
+#include "register.h"
 
 #ifdef __cplusplus
 extern "C" {

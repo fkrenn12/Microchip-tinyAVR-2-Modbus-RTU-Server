@@ -1,7 +1,5 @@
-// C
 #include "configuration.h"
-#include <avr/eeprom.h>     // AVR EEPROM API
-#include "config.h"        // for UART_BAUDRATE default
+ 
 
 // Project-specific offsets (keep in a single place)
 #ifndef EEPROM_OFFSET_MODBUS_ID
@@ -18,7 +16,7 @@
 #define UART_BAUDRATE 9600u
 #endif
 
-Configuration configuration = {
+Configuration g_configuration = {
     .uart_baudrate = UART_BAUDRATE,
     .registers = {0u, (uint16_t)(UART_BAUDRATE/100)},
     .sizeOfConfigurationRegisters = (ConfigurationRegisterIndex)CFG_SIZE
@@ -50,31 +48,6 @@ uint8_t load_modbus_id_from_eeprom(void) {
     id = (id == 0xff && MODBUS_ID != 0) ? MODBUS_ID : id; // set to config.h default if unprogrammed
     return id;
 }
-
-/*
-void load_modbus_server_name_from_eeprom(uint8_t* nameBuffer, uint8_t bufferSize) {
-    if (bufferSize == 0) return; // nothing to do
-    for (uint8_t i = 0; i < bufferSize - 1; i++) {
-        uint8_t c = eeprom_read_byte((uint8_t*)(EEPROM_OFFSET_MODBUS_SERVER_NAME + i));
-        if (c == 0 || c == 0xff) {
-            nameBuffer[i] = 0;
-            return;
-        }
-        nameBuffer[i] = c;
-    }
-    nameBuffer[bufferSize - 1] = 0; // ensure null-termination
-}
-*/
-
-/*
-void store_modbus_server_name_to_eeprom(const uint8_t* name) {
-    for (uint8_t i = 0; i < MAX_SERVERNAME_LENGTH; i++) { // limit to 32 bytes
-        uint8_t c = name[i];
-        eeprom_write_byte((uint8_t*)(EEPROM_OFFSET_MODBUS_SERVER_NAME + i), c);
-        if (c == 0 || c == 0xff) break; // null-terminated
-    }
-}
-*/
 
 void store_baudrate_to_eeprom(uint32_t baudrate) {
     // Encode as baud/100, clamp to 16-bit
@@ -128,4 +101,22 @@ void handle_reset_enable_pin(void){
         RESET_ENABLE_PORT.PIN6CTRL = 0;
         RESET_ENABLE_PORT.PIN7CTRL = 0;
     #endif
+}
+
+void update_configuration(void){
+    // store modbus id and baudrate in eeprom configuration registers
+    const uint8_t id=(uint8_t)(g_configuration.registers[CFG_MODBUS_ID] & 0xFF);
+    g_configuration.uart_baudrate=(uint32_t)(g_configuration.registers[CFG_UART_BAUDRATE])*100;
+    store_modbus_id_to_eeprom(id);
+    store_baudrate_to_eeprom(g_configuration.uart_baudrate);
+    _delay_ms(10);
+    asm volatile("jmp 0"); // we have to jump to restart
+    // reinit uart with new baudrate
+    // init_uart0(configuration.uart_baudrate);  // unlikely  do not work !!
+}
+
+void init_configuration(void){
+    g_configuration.uart_baudrate = load_baudrate_from_eeprom();
+    g_configuration.registers[CFG_MODBUS_ID] = (uint16_t)load_modbus_id_from_eeprom();
+    g_configuration.registers[CFG_UART_BAUDRATE] = (uint16_t)(g_configuration.uart_baudrate/100);
 }

@@ -34,7 +34,7 @@ void init_tcb0_us(uint16_t us)
   TCB0.INTFLAGS = TCB_CAPT_bm; /* Clear the interrupt flag */
 }
 
-void uartSendPacket(uint8_t* buffer , uint16_t len)
+void uart_sendPacket(uint8_t* buffer , uint16_t len)
 {
     #if (UART_TX_ENABLE_PIN > 0)
       UART_TX_ENABLE_PORT.OUTSET = UART_TX_ENABLE_PIN; // Set TxEnablePin high

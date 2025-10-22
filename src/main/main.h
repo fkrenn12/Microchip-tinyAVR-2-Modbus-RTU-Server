@@ -1,10 +1,10 @@
-#ifndef _MAIN_H
-#define _MAIN_H
+#pragma once
 
 #include "avr/io.h"
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "config.h"
 #include "uart.h"
@@ -12,18 +12,22 @@
 #include "adc.h"
 #include "pwm.h"
 #include "configuration.h"
+#include "register.h"
+#include "update_register.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+void init_peripheral(void);
+/*
 void update_peripheral(void);
 void update_input_discretes(void);
 void update_coils(void);
 void update_holding_registers(void);
-void init_peripheral(void);
+*/
+
 
 #ifdef __cplusplus
 }
-#endif
 #endif
