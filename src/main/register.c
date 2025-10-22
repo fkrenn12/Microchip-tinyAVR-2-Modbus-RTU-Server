@@ -7,6 +7,7 @@ void init_registers(void){
     init_coils();
     init_discrete_inputs();
     init_holding_registers(); 
+    link_registers();
 }
 
 void link_registers(void){
@@ -15,6 +16,7 @@ void link_registers(void){
     modbus_set_input_registers(g_registers.input_registers, g_registers.numOfInputRegisters);
     modbus_set_discrete_inputs_registers(g_registers.discrete_inputs, g_registers.numOfDiscreteInputs);
     modbus_set_holding_registers(g_registers.holding_registers, g_registers.numOfHoldingRegisters);
+    
 }
 
 static void init_app_registers(void) {

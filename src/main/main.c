@@ -28,13 +28,12 @@ ISR(TCB0_INT_vect)
     PORTMUX.USARTROUTEA = PORTMUX_USART1_NONE_gc | PORTMUX_USART0_ALT1_gc;
     init_configuration();
     init_registers();
-    link_registers();
     init_update_callbacks();
     
     modbus_set_id(load_modbus_id_from_eeprom());
     modbus_set_send_package_callback(uart_sendPacket);
-    modbus_set_configuration_registers(g_configuration.registers, g_configuration.sizeOfConfigurationRegisters);
     modbus_set_update_configuration_callback(update_configuration);
+    modbus_set_configuration_registers(g_configuration.registers, g_configuration.sizeOfConfigurationRegisters);
 
     init_adc();
     init_tcb0_us(T1_5us(g_configuration.uart_baudrate));
