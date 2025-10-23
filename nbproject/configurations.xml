@@ -17,6 +17,8 @@
       <itemPath>src/main/uart.h</itemPath>
       <itemPath>src/main/defines.h</itemPath>
       <itemPath>src/main/configuration.h</itemPath>
+      <itemPath>src/main/register.h</itemPath>
+      <itemPath>src/main/update_register.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -46,6 +48,8 @@
       <itemPath>src/main/pwm.c</itemPath>
       <itemPath>src/main/uart.c</itemPath>
       <itemPath>src/main/configuration.c</itemPath>
+      <itemPath>src/main/register.c</itemPath>
+      <itemPath>src/main/update_register.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>

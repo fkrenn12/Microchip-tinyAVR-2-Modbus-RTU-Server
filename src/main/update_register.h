@@ -4,6 +4,7 @@
 #include "defines.h"
 #include "config.h"
 #include "register.h"
+#include "modbus_rtu/server.h"
 
 void update_holding_registers(void);
 void update_input_registers(void);

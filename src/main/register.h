@@ -3,6 +3,8 @@
 #include "inttypes.h"
 #include "defines.h"
 #include "config.h"
+#include "pwm.h"
+#include "modbus_rtu/server.h"
 
 // test nochwas
 // An aggregate container for all Modbus register areas of your application
@@ -28,7 +30,7 @@ typedef struct ModbusAppRegisters {
     uint8_t  numOfHoldingRegisters;
 } ModbusAppRegisters;
 
-static void init_app_registers(void);
+void init_app_registers(void);
 void init_coils(void);
 void init_discrete_inputs(void);
 void init_holding_registers(void);

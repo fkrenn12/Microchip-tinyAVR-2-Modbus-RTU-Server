@@ -19,7 +19,7 @@ void link_registers(void){
     
 }
 
-static void init_app_registers(void) {
+void init_app_registers(void) {
     // copy configuration from macro
     // Discrete Inputs
     {
