@@ -4,7 +4,7 @@
 #include "defines.h"
 #include "config.h"
 
-// test 
+// test nochwas
 // An aggregate container for all Modbus register areas of your application
 typedef struct ModbusAppRegisters {
     // Discrete Inputs
