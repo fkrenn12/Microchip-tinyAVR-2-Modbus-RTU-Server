@@ -12,3 +12,7 @@ nbproject/private
 *.private.*
 cmake
 out
+nbproject/Makefile-genesis.properties
+nbproject/Makefile-local-default.mk
+
+
