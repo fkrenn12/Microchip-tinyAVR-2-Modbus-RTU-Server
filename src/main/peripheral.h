@@ -4,15 +4,15 @@
 #include "config.h"
 #pragma once
 
-#if defined (__AVR_ATtiny424__) || (__AVR_ATtiny824__) || defined(__AVR_ATtiny1624__) || defined(__AVR_ATtiny3224__)
+#if defined (__AVR_ATtiny424__) || defined (__AVR_ATtiny824__) || defined(__AVR_ATtiny1624__) || defined(__AVR_ATtiny3224__)
 #define DEVICE_PIN14
 #define ATTINY
 #endif
-#if defined (__AVR_ATtiny426__) || (__AVR_ATtiny826__) || defined(__AVR_ATtiny1626__) || defined(__AVR_ATtiny3226__)
+#if defined (__AVR_ATtiny426__) || defined (__AVR_ATtiny826__) || defined(__AVR_ATtiny1626__) || defined(__AVR_ATtiny3226__)
 #define DEVICE_PIN20
 #define ATTINY
 #endif
-#if defined (__AVR_ATtiny427__) || (__AVR_ATtiny827__) || defined(__AVR_ATtiny1627__) || defined(__AVR_ATtiny3227__)
+#if defined (__AVR_ATtiny427__) || defined (__AVR_ATtiny827__) || defined(__AVR_ATtiny1627__) || defined(__AVR_ATtiny3227__)
 #define DEVICE_PIN24
 #define ATTINY
 #endif
