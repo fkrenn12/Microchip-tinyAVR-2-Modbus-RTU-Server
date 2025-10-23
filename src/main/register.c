@@ -27,7 +27,7 @@ static void init_app_registers(void) {
         g_registers.numOfDiscreteInputs = (uint8_t)(sizeof(tmp)/sizeof(uint16_t));
         for (uint8_t i = 0; i < g_registers.numOfDiscreteInputs; ++i) {
             g_registers.config_discrete_inputs[i] = tmp[i];
-            g_registers.config_discrete_inputs[i] = 0;
+            g_registers.discrete_inputs[i] = 0;
         }
     }
 
