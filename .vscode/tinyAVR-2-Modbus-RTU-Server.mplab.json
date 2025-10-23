@@ -428,19 +428,8 @@
     {
       "name": "Project files",
       "files": [
-        "src/main/adc.h",
-        "src/main/config.h",
-        "src/main/main.h",
-        "src/main/peripheral.h",
-        "src/main/pwm.h",
-        "src/main/uart.h",
-        "src/main/defines.h",
         "Makefile",
-        "src/main/adc.c",
-        "src/main/main.c",
-        "src/main/pwm.c",
-        "src/main/uart.c",
-        "src/main/eeprom_config.c",
+        "src/main/*{.c,.h}",
         "src/main/modbus_rtu/*{.c,.h}"
       ],
       "encoding": "ISO-8859-1"

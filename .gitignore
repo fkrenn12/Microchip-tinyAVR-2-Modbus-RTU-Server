@@ -9,6 +9,7 @@ build
 _build
 dist
 nbproject/private
+nbproject/Makefile*
 *.private.*
 cmake
 out
