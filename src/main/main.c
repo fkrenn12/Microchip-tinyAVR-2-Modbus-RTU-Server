@@ -39,7 +39,7 @@ ISR(TCB0_INT_vect)
     init_tcb0_us(T1_5us(g_configuration.uart_baudrate));
     init_uart0(g_configuration.uart_baudrate);
 
-    sei();
+    sei();  
     
     while (1){
         adc_sequencer();
