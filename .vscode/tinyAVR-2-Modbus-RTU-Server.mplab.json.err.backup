@@ -430,7 +430,7 @@
             "files": [
                 "Makefile",
                 "src/main/*{.c,.h}",
-                "src/main/modbus_rtu/*{.c,.h}"
+                "src/main/modbus_rtu/*{.c,.h}",
             ],
             "encoding": "ISO-8859-1"
         }
