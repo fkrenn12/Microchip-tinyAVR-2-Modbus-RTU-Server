@@ -53,7 +53,7 @@ gh repo clone fkrenn12/Microchip-tinyAVR-2-Modbus-RTU-Server
 ### `MODBUS-ID`
 In the file `config.h`, you can specify the ID on the line `#define MODBUS_ID`. A valid ID is in the range 1 to 247. If the ID is not specified (i.e., the line reads #define MODBUS_ID 0), the ID **must be written** later using a Modbus client or directly into the EEPROM to ensure proper operation in a system.
 ###### Using Modbus Client
-Modbus-ID 247 is reserved for configuring the server.  
+Modbus-ID 254 is reserved for configuring the server.  
 To change an ID, a client must send a Write Single Holding Register message.
 
 | Field             | Size    | Value/Range        | Notes                               |
