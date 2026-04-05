@@ -76,7 +76,7 @@ In the example above, the `MODBUS_ID` is set to 0xAA and COM1 is used with an AT
 In the file `config.h`, you can specify the UART baud rate. If #define UART_BAUDRATE 0 is set, the default value of `9600 bps` is used. The baud rate can also be written later using a Modbus client or directly into the EEPROM.
 
 ###### Using Modbus Client
-Modbus-ID 247 is reserved for configuring the server.   
+Modbus-ID 254 is reserved for configuring the server.   
 To change an ID, a client must send a Write Single Holding Register message.  
 
 | Field             | Size    | Value/Range        | Notes                               |
