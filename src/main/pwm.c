@@ -146,9 +146,9 @@ void pwm_set_frequency(uint16_t frequency){
     }
     else{
         if (pwm_frequency != frequency){
-            uint8_t divider= tca_single_divider_from_freq_dual_slope(frequency);
+            divider= tca_single_divider_from_freq_dual_slope(frequency);
             if (divider != 0xFF){
-              uint16_t periode = tca_compute_periode_for_freq(frequency, divider);
+              periode = tca_compute_periode_for_freq(frequency, divider);
               // recalculate duty cycle
               cmp0 = duty_from_percent(percent_WO0);
               cmp1 = duty_from_percent(percent_WO1);
