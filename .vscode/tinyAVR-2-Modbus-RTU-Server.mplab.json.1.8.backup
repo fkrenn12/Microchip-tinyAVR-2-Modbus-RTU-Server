@@ -1,6 +1,25 @@
 {
-    "version": "1.9",
+    "version": "1.8",
     "importedFrom": "./",
+    "configurations": [
+        {
+            "name": "default",
+            "id": "conf1",
+            "device": "ATtiny3224",
+            "imageType": "application",
+            "imagePath": "./out/tinyAVR-2-Modbus-RTU-Server/default.elf",
+            "toolProperties": "default-tool",
+            "packs": [
+                {
+                    "name": "ATtiny_DFP",
+                    "vendor": "Microchip",
+                    "version": "3.1.260"
+                }
+            ],
+            "fileSet": "Project files",
+            "toolchain": "default-XC8"
+        }
+    ],
     "propertyGroups": [
         {
             "name": "default-XC8",
@@ -414,26 +433,6 @@
                 "src/main/modbus_rtu/*{.c,.h}"
             ],
             "encoding": "ISO-8859-1"
-        }
-    ],
-    "configurations": [
-        {
-            "name": "default",
-            "id": "conf1",
-            "device": "ATtiny3224",
-            "imageType": "application",
-            "imagePath": "./out/tinyAVR-2-Modbus-RTU-Server/default.elf",
-            "toolProperties": "default-tool",
-            "packs": [
-                {
-                    "name": "ATtiny_DFP",
-                    "vendor": "Microchip",
-                    "version": "3.1.260"
-                }
-            ],
-            "fileSet": "Project files",
-            "toolchain": "default-XC8",
-            "includeLegacyMacros": true
         }
     ]
 }
