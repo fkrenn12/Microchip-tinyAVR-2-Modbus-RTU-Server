@@ -74,7 +74,7 @@ uint16_t tca_compute_periode_for_freq(uint16_t freqHz, uint8_t divider) {
 uint16_t duty_from_percent(uint8_t percent) {
   if (percent > 100) percent = 100;
   // Map 0..100% to 0..PER with rounding
-  return (uint16_t)((((uint32_t)percent) * ((uint16_t)TCA0.SINGLE.PER + 1) + 50) / 100);
+  return (uint16_t)((((uint32_t)percent) * (periode + 1) + 50) / 100);
 }
 
 // One-time initialization: TCA0 single mode PWM on WO0..WO2
