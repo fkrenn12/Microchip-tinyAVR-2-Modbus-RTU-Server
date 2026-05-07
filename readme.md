@@ -211,7 +211,7 @@ The reference voltage can be adjusted in the config.h file by changing the value
 | ADC_REF_VREFA | VREFA | VREFA / 4096 |
 
 ### Reference Voltage for Analog Comperator 
-Used for -Input of ADC if Single ended against reference voltage is selected
+This reference voltage is used as -Input of ADC if Single ended against reference voltage is selected
 
 |  | Base in mV | Vref in mV | 
 |-------:|------------------:|------------:|
@@ -224,8 +224,8 @@ Used for -Input of ADC if Single ended against reference voltage is selected
 The `AC_REFERENCE_DIVIDER` is a divider for the reference voltage. It can be also defined in the config.h file. The default value is 128.  
 Example:   
 ```bash
-#define AC_REFERENCE AC_REF_1024MV  
-#define AC_REFERENCE_DIVIDER 100  
+#define AC_REFERENCE AC_REF_2048MV  
+#define AC_REFERENCE_DIVIDER 125  
 ```
 Vref = 2048mV / 256 * 125 = **1V**  
 
