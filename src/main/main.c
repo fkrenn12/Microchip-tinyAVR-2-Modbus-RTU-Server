@@ -23,7 +23,7 @@ ISR(TCB0_INT_vect)
     void loop(){}
     void setup(){
 #endif
-    handle_reset_enable_pin(); // will restart here if reset pin activated and set to high
+    handle_modbus_reset_enable_pin(); // will restart here if reset pin activated and set to high
     // configure alt uart pins    
     PORTMUX.USARTROUTEA = PORTMUX_USART1_NONE_gc | PORTMUX_USART0_ALT1_gc;
     init_configuration();

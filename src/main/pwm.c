@@ -3,7 +3,8 @@ static uint8_t init_done = 0;
 static uint16_t pwm_frequency = 0;
 static uint8_t pwm_channel_WO0_initialized, pwm_channel_WO1_initialized, pwm_channel_WO2_initialized = 0;
 static uint16_t percent_WO0, percent_WO1, percent_WO2  = 0;
-
+static uint16_t cmp0, cmp1, cmp2, periode = 0;
+static uint8_t divider = 0;
 /*
 static uint8_t tca_single_divider_from_freq_single_slope(uint16_t freqHz) {
   if (freqHz >= 40001 && freqHz <= 65535) {
@@ -94,17 +95,48 @@ void tca0_init_single(uint32_t frequency) {
   TCA0.SINGLE.CMP1 = 0;
   TCA0.SINGLE.CMP2 = 0;
 
-  uint8_t divider= tca_single_divider_from_freq_dual_slope(frequency);
+  divider= tca_single_divider_from_freq_dual_slope(frequency);
   if (divider != 0xFF) {
-    uint16_t periode = tca_compute_periode_for_freq(frequency, divider);
+    periode = tca_compute_periode_for_freq(frequency, divider);
     if (periode){
         TCA0.SINGLE.CTRLA = 0;
         TCA0.SINGLE.PER = periode;
         TCA0.SINGLE.CTRLA = divider | TCA_SINGLE_ENABLE_bm;
     }
   }
+  // Enable overflow interrupt for glitch-free updates
+  TCA0.SINGLE.INTCTRL = TCA_SINGLE_OVF_bm; 
 }
 
+ISR(TCA0_OVF_vect) {
+    // Atomic update of PWM compare value at timer overflow
+    // This synchronization prevents glitches and false cycles
+    static uint16_t previous_cmp0, previous_cmp1, previous_cmp2, previous_periode = 0;
+    static uint8_t previous_divider = 0;
+    if (previous_periode != periode){
+      previous_periode = periode;
+      if (periode) TCA0.SINGLE.PER = periode; // prevents 0 periode
+    }
+    if (previous_divider != divider){
+      previous_divider = divider;
+      TCA0.SINGLE.CTRLA = divider | TCA_SINGLE_ENABLE_bm;
+    }
+    if (previous_cmp0 != cmp0){
+      previous_cmp0 = cmp0;
+      TCA0.SINGLE.CMP0 = cmp0;
+    }
+    if (previous_cmp1 != cmp1){
+      previous_cmp1 = cmp1;
+      TCA0.SINGLE.CMP1 = cmp1;
+    }
+    if (previous_cmp2 != cmp2){
+      previous_cmp2 = cmp2;
+      TCA0.SINGLE.CMP2 = cmp2;
+    }
+
+    // Clear interrupt flag
+    TCA0.SINGLE.INTFLAGS = TCA_SINGLE_OVF_bm;
+}
 void pwm_set_frequency(uint16_t frequency){
     
     if (!init_done){
@@ -115,16 +147,12 @@ void pwm_set_frequency(uint16_t frequency){
     else{
         if (pwm_frequency != frequency){
             uint8_t divider= tca_single_divider_from_freq_dual_slope(frequency);
-            if (divider != 0xFF) {
+            if (divider != 0xFF){
               uint16_t periode = tca_compute_periode_for_freq(frequency, divider);
-              if (periode){
-                  TCA0.SINGLE.PER = periode;
-                  TCA0.SINGLE.CTRLA = divider | TCA_SINGLE_ENABLE_bm;
-              }
               // recalculate duty cycle
-              TCA0.SINGLE.CMP0 = duty_from_percent(percent_WO0);
-              TCA0.SINGLE.CMP1 = duty_from_percent(percent_WO1);
-              TCA0.SINGLE.CMP2 = duty_from_percent(percent_WO2);
+              cmp0 = duty_from_percent(percent_WO0);
+              cmp1 = duty_from_percent(percent_WO1);
+              cmp2 = duty_from_percent(percent_WO2);
             }
             pwm_frequency = frequency;
         }
@@ -138,39 +166,39 @@ void pwm_set_duty(uint8_t channel, uint8_t percent)
     if (channel==((HOLDING_PWM_PB0_DUTY) & 0xFF)){
         if (!pwm_channel_WO0_initialized ){
             pwm_channel_WO0_initialized  = 1;
-            TCA0.SINGLE.CMP0 = duty_from_percent(percent);
+            cmp0 = TCA0.SINGLE.CMP0 = duty_from_percent(percent);
             percent_WO0 = percent;
             TCA0.SINGLE.CTRLB |= TCA_SINGLE_CMP0EN_bm;
             PORTB.DIRSET = PIN0_bm;
         }
         else{
-            TCA0.SINGLE.CMP0 = duty_from_percent(percent);
+            cmp0 = duty_from_percent(percent); // will be set in ISR 
             percent_WO0 = percent;
         }
     }
     else if (channel==((HOLDING_PWM_PB1_DUTY) & 0xFF)){
         if (!pwm_channel_WO1_initialized ){
             pwm_channel_WO1_initialized = 1;
-            TCA0.SINGLE.CMP1 = duty_from_percent(percent);
+            cmp1 = TCA0.SINGLE.CMP1 = duty_from_percent(percent);
             percent_WO1 = percent;
             TCA0.SINGLE.CTRLB |= TCA_SINGLE_CMP1EN_bm;
             PORTB.DIRSET = PIN1_bm;
         }
         else{
-            TCA0.SINGLE.CMP1 = duty_from_percent(percent);
+            cmp1 = duty_from_percent(percent);  // will be set in ISR 
             percent_WO1 = percent;
         }
     }
     else if (channel==((HOLDING_PWM_PB2_DUTY) & 0xFF)){
         if (!pwm_channel_WO2_initialized ){
             pwm_channel_WO2_initialized = 1;
-            TCA0.SINGLE.CMP2 = duty_from_percent(percent);
+            cmp2 = TCA0.SINGLE.CMP2 = duty_from_percent(percent);
             percent_WO2 = percent;
             TCA0.SINGLE.CTRLB |= TCA_SINGLE_CMP2EN_bm;
             PORTB.DIRSET = PIN2_bm;
         }
         else{
-            TCA0.SINGLE.CMP2 = duty_from_percent(percent);
+            cmp2 = duty_from_percent(percent); // will be set in ISR 
             percent_WO2 = percent;
         }
     }

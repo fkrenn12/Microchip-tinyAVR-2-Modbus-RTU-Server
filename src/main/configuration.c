@@ -66,40 +66,40 @@ void eeprom_erase(void) {
     }
 }
 
-void handle_reset_enable_pin(void){
-    #if (RESET_ENABLE_PIN > 0)
+void handle_modbus_reset_enable_pin(void){
+    #if (MODBUS_RESET_ENABLE_PIN > 0)
         // set as input enable pullup
-        // check RESET_ENABLE_PIN should be done here !!
-        RESET_ENABLE_PORT.DIRCLR = RESET_ENABLE_PIN;
-        if (RESET_ENABLE_PIN==PIN0_bm) RESET_ENABLE_PORT.PIN0CTRL = PORT_PULLUPEN_bm; 
-        else if (RESET_ENABLE_PIN==PIN1_bm) RESET_ENABLE_PORT.PIN1CTRL = PORT_PULLUPEN_bm; 
-        else if (RESET_ENABLE_PIN==PIN2_bm) RESET_ENABLE_PORT.PIN2CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN3_bm) RESET_ENABLE_PORT.PIN3CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN4_bm) RESET_ENABLE_PORT.PIN4CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN5_bm) RESET_ENABLE_PORT.PIN5CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN6_bm) RESET_ENABLE_PORT.PIN6CTRL = PORT_PULLUPEN_bm;
-        else if (RESET_ENABLE_PIN==PIN7_bm) RESET_ENABLE_PORT.PIN7CTRL = PORT_PULLUPEN_bm;
+        // check MODBUS_RESET_ENABLE_PIN should be done here !!
+        MODBUS_RESET_ENABLE_PORT.DIRCLR = MODBUS_RESET_ENABLE_PIN;
+        if (MODBUS_RESET_ENABLE_PIN==PIN0_bm) MODBUS_RESET_ENABLE_PORT.PIN0CTRL = PORT_PULLUPEN_bm; 
+        else if (MODBUS_RESET_ENABLE_PIN==PIN1_bm) MODBUS_RESET_ENABLE_PORT.PIN1CTRL = PORT_PULLUPEN_bm; 
+        else if (MODBUS_RESET_ENABLE_PIN==PIN2_bm) MODBUS_RESET_ENABLE_PORT.PIN2CTRL = PORT_PULLUPEN_bm;
+        else if (MODBUS_RESET_ENABLE_PIN==PIN3_bm) MODBUS_RESET_ENABLE_PORT.PIN3CTRL = PORT_PULLUPEN_bm;
+        else if (MODBUS_RESET_ENABLE_PIN==PIN4_bm) MODBUS_RESET_ENABLE_PORT.PIN4CTRL = PORT_PULLUPEN_bm;
+        else if (MODBUS_RESET_ENABLE_PIN==PIN5_bm) MODBUS_RESET_ENABLE_PORT.PIN5CTRL = PORT_PULLUPEN_bm;
+        else if (MODBUS_RESET_ENABLE_PIN==PIN6_bm) MODBUS_RESET_ENABLE_PORT.PIN6CTRL = PORT_PULLUPEN_bm;
+        else if (MODBUS_RESET_ENABLE_PIN==PIN7_bm) MODBUS_RESET_ENABLE_PORT.PIN7CTRL = PORT_PULLUPEN_bm;
         _delay_ms(1);
         // read status
-        if (RESET_ENABLE_PORT.IN & RESET_ENABLE_PIN == 0) {
+        if (MODBUS_RESET_ENABLE_PORT.IN & MODBUS_RESET_ENABLE_PIN == 0) {
             // low detected -> clear baudrate (= set to 0xffffff)
             eeprom_write_byte(EEPROM_OFFSET_BAUDRATE,0xFF); 
             eeprom_write_byte(EEPROM_OFFSET_BAUDRATE+1,0xFF); 
             // wait releasing 
             _delay_ms(10);
-            while (RESET_ENABLE_PORT.IN & RESET_ENABLE_PIN == 0);
+            while (MODBUS_RESET_ENABLE_PORT.IN & MODBUS_RESET_ENABLE_PIN == 0);
             _delay_ms(100);
-            // reset
+            // cpu reset
             asm volatile ("jmp 0");
         }
-        RESET_ENABLE_PORT.PIN0CTRL = 0;
-        RESET_ENABLE_PORT.PIN1CTRL = 0;
-        RESET_ENABLE_PORT.PIN2CTRL = 0;
-        RESET_ENABLE_PORT.PIN3CTRL = 0;
-        RESET_ENABLE_PORT.PIN4CTRL = 0;
-        RESET_ENABLE_PORT.PIN5CTRL = 0;
-        RESET_ENABLE_PORT.PIN6CTRL = 0;
-        RESET_ENABLE_PORT.PIN7CTRL = 0;
+        MODBUS_RESET_ENABLE_PORT.PIN0CTRL = 0;
+        MODBUS_RESET_ENABLE_PORT.PIN1CTRL = 0;
+        MODBUS_RESET_ENABLE_PORT.PIN2CTRL = 0;
+        MODBUS_RESET_ENABLE_PORT.PIN3CTRL = 0;
+        MODBUS_RESET_ENABLE_PORT.PIN4CTRL = 0;
+        MODBUS_RESET_ENABLE_PORT.PIN5CTRL = 0;
+        MODBUS_RESET_ENABLE_PORT.PIN6CTRL = 0;
+        MODBUS_RESET_ENABLE_PORT.PIN7CTRL = 0;
     #endif
 }
 

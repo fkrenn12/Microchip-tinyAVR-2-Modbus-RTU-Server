@@ -35,7 +35,7 @@ void store_baudrate_to_eeprom(uint32_t baudrate);
 void store_modbus_id_to_eeprom(uint8_t modbus_id);
 
 void eeprom_erase(void);
-void handle_reset_enable_pin(void);
+void handle_modbus_reset_enable_pin(void);
 void init_configuration(void);
 void update_configuration(void);
 
