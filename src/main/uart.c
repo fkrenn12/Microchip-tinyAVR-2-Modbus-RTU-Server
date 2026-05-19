@@ -8,8 +8,8 @@ void init_uart0(uint32_t baudrate)
   }
   else PORTB.DIRSET = PIN2_bm; // Set TX (RB2) as output
   #if (UART_TX_ENABLE_PIN > 0)
-      UART_TX_ENABLE_PORT.DIRSET = UART_TX_ENABLE_PIN; // Set TxEnablePin as output
-      UART_TX_ENABLE_PORT.OUTCLR = UART_TX_ENABLE_PIN; // Set TxEnablePin low
+      UART_TX_ENABLE_PORT.DIRSET = 1<<UART_TX_ENABLE_PIN; // Set TxEnablePin as output
+      UART_TX_ENABLE_PORT.OUTCLR = 1<<UART_TX_ENABLE_PIN; // Set TxEnablePin low
   #endif
   USART0.BAUD = (uint16_t)USART0_BAUD_RATE(baudrate); // Set baud rate
   USART0.CTRLB = USART_RXEN_bm | USART_TXEN_bm;
@@ -35,24 +35,24 @@ void init_tcb0_us(uint16_t us)
 }
 
 void uart_sendPacket(uint8_t* buffer , uint16_t len)
-{
+{   
     #if (UART_TX_ENABLE_PIN > 0)
-      UART_TX_ENABLE_PORT.OUTSET = UART_TX_ENABLE_PIN; // Set TxEnablePin high
+      UART_TX_ENABLE_PORT.OUTSET = 1<<UART_TX_ENABLE_PIN; // Set TxEnablePin high
     #endif
+
     USART0.CTRLB &= ~USART_RXEN_bm; // Disable receiver during transmission
-    _delay_us(300);
+    _delay_us(1); // allow line to stabilize before transmitting (optional, may depend on hardware)
     
     for (uint8_t i = 0; i < len; i++){
         while (!(USART0.STATUS & USART_DREIF_bm)); // Wait for empty transmit buffer
         USART0.TXDATAL = buffer[i];
     }
     while (!(USART0.STATUS & USART_DREIF_bm)); // Wait for empty transmit buffer
-    
-    // allow a frame delay to indicate end of transmission
-    _delay_us(300);
+    while (!(USART0.STATUS & USART_TXCIF_bm)); // Wait for transmission to complete
+    USART0.STATUS  |= USART_TXCIF_bm; // It is cleared by writing a ‘1’ to it
 
     #if (UART_TX_ENABLE_PIN > 0)
-    UART_TX_ENABLE_PORT.OUTCLR = UART_TX_ENABLE_PIN; // Set TxEnablePin low
+    UART_TX_ENABLE_PORT.OUTCLR = 1<<UART_TX_ENABLE_PIN; // Set TxEnablePin low
     #endif
     USART0.CTRLB |= USART_RXEN_bm; // Re-enable receiver
 }

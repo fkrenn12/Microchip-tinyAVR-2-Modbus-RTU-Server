@@ -29,7 +29,7 @@
 // *** Modbus Reset pin ***
 #define MODBUS_RESET_ENABLE_PORT PORTA     // Set to the port where your Reset pin is connected 
                                            // valid values: PORTA, PORTB, PORTC, PORTD, PORTE, PORTF, ...
-#define MODBUS_RESET_ENABLE_PIN 0          // 0: no RESET_ENABLE_PIN implemented. 
+#define MODBUS_RESET_ENABLE_PIN 0         // 0: no RESET_ENABLE_PIN implemented. 
                                            // valid values: PIN0_bm, PIN1_bm, PIN2_bm, PIN3_bm, PIN4_bm, PIN5_bm, PIN6_bm, PIN7_bm
 
 // *** ADC Reference voltage ***
