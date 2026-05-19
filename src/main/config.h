@@ -17,7 +17,7 @@
 // Common settings: 9600 and 19200 bps
 // Any value is possible, but cable length, transmission medium, and other MODBUS devices 
 // must be taken into account when choosing the value.
-#define UART_BAUDRATE (uint32_t)1000000      // this is the default value
+#define UART_BAUDRATE (uint32_t)9600     // this is the default value
                                     // reprogrammable by pymcuprog (eeprom) or modbus_id=254
 
 // *** TX Enable pin ***
