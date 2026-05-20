@@ -160,6 +160,6 @@ void update_discrete_inputs(void)
             // Unknown port code; ignore entry
             continue;
         }
-        g_registers.config_discrete_inputs[i] = pin_val;
+        g_registers.discrete_inputs[i] = pin_val;
     }
 }
