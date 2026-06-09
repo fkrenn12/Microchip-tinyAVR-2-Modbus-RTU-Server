@@ -6,8 +6,16 @@
 #include "register.h"
 #include "modbus_rtu/server.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void update_holding_registers(void);
 void update_input_registers(void);
 void update_coils(void);
 void update_discrete_inputs(void);
 void init_update_callbacks(void);
+
+#ifdef __cplusplus
+}
+#endif

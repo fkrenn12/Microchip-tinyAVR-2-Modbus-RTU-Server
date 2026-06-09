@@ -6,6 +6,10 @@
 #include "pwm.h"
 #include "modbus_rtu/server.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // test nochwas
 // An aggregate container for all Modbus register areas of your application
 typedef struct ModbusAppRegisters {
@@ -36,3 +40,7 @@ void init_discrete_inputs(void);
 void init_holding_registers(void);
 void init_registers(void);
 void link_registers(void);
+
+#ifdef __cplusplus
+}
+#endif
