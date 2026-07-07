@@ -26,10 +26,10 @@ ISR(USART0_RXC_vect) {
 // ISR for TCB0 compare
 ISR(TCB0_INT_vect)
 {
+  modbus_package_ready();
   TCB0.INTFLAGS = TCB_CAPT_bm; /* Clear the interrupt flag */
   TCB0.CTRLA &= ~TCB_ENABLE_bm; // Stop timer
   TCB0.CNT = 0; // Reset timer count
-  modbus_package_ready();
 }
 
 // Initialize TCB0 timer to trigger compare interrupt after 'us' microseconds
