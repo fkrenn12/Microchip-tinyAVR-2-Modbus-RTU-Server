@@ -8,14 +8,6 @@
 extern Configuration g_configuration;
 ////////////////////////////////////////////////////////////////////////
 
-// ISR for TCB0 compare
-ISR(TCB0_INT_vect)
-{
-  TCB0.INTFLAGS = TCB_CAPT_bm; /* Clear the interrupt flag */
-  TCB0.CTRLA &= ~TCB_ENABLE_bm; // Stop timer
-  TCB0.CNT = 0; // Reset timer count
-  modbus_package_ready();
-}
 
 #ifndef ARDUINO
     int main() {
@@ -36,7 +28,7 @@ ISR(TCB0_INT_vect)
     modbus_set_configuration_registers(g_configuration.registers, g_configuration.sizeOfConfigurationRegisters);
 
     init_adc();
-    init_tcb0_us(T1_5us(g_configuration.uart_baudrate));
+    init_tcb0_us(T3_5us(g_configuration.uart_baudrate));
     init_uart0(g_configuration.uart_baudrate);
 
     sei(); 

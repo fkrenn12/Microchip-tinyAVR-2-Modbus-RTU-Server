@@ -8,19 +8,19 @@
                     // 1-247:   initial unique address until reprogrammed
 
 // *** Low latency mode ***
-// !! This is not standard compliant !! But allows faster response time for high baud rates
+// Low latency mode is NOT modbus standard compliant.
 // Setting to 1 will enable the low latency mode and will decrease the modbus response time
-// from approx. 1.75ms to 0.2ms
-// It can cause problems with some modbus masters, so it is disabled by default
-// The modbus master must be able to send without (or very low) inter-character gap, otherwise it will not work with this mode enabled
-#define MODBUS_LOW_LATENCY_MODE 1  // 0 or 1
+// from approx. 1ms to 0.2ms
+#define MODBUS_LOW_LATENCY_MODE 0  // 0 or 1
 
 // *** Baudrate settings ***
-// Common settings: 9600 and 19200 bps
-// Any value is possible, but cable length, transmission medium, and other MODBUS devices 
+// Common settings are: 9600, 19200, 115200 bps
+// The baudrate can be set to any value between 2400 and 1000000 bps.
+// This range is tested and works well,
+// but cable length, transmission medium, and other MODBUS devices 
 // must be taken into account when choosing the value.
-#define UART_BAUDRATE (uint32_t)9600     // this is the default value
-                                    // reprogrammable by pymcuprog (eeprom) or modbus_id=254
+#define UART_BAUDRATE (uint32_t)9600// this is the default value
+                                    // also reprogrammable by pymcuprog (eeprom) or modbus_id=254
 
 // *** TX Enable pin ***
 #define UART_TX_ENABLE_PORT PORTA   // Set to the port where your Tx Enable pin is connected 
