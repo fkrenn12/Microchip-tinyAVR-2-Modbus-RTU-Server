@@ -1,5 +1,6 @@
 #ifndef _MODBUS_SLAVE_H
 #define _MODBUS_SLAVE_H
+#pragma once
 /*
   Modbus Specifications and Implementation Guides
   
@@ -15,8 +16,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
 
 #define MODBUS_BUFFER_SIZE 256
 #define MODBUS_POS_ID 0 // position in the frame where the address starts
@@ -39,15 +38,27 @@ extern "C" {
 #define MODBUS_ISHOLDING 0
 #define MODBUS_ISCONFIG 1
 
-typedef struct {
+typedef void (*modbus_frame_callback_t)(uint8_t* frame, uint16_t len);
+typedef void (*update_callback_t)(void);
+
+typedef struct _register{
     uint16_t* registers;
     uint16_t count;
 } Registers;
 
+typedef struct _callback{
+  modbus_frame_callback_t send_package;
+  update_callback_t update_holding_registers;
+  update_callback_t update_input_registers;
+  update_callback_t update_input_discretes;
+  update_callback_t update_coils;
+  update_callback_t update_configuration;
+}Callback;
+
 typedef struct _modbus{
     uint8_t  buffer[MODBUS_BUFFER_SIZE];
     uint16_t head;
-    uint16_t crc;
+    uint16_t crc_appended;
     uint8_t  updateFlag;
     uint16_t actual_size;
     uint8_t actual_id;
@@ -63,7 +74,7 @@ typedef struct _modbus{
     Registers config; 
 } Modbus;
 
-typedef void (*modbus_frame_callback_t)(uint8_t* frame, uint16_t len);
+
 
 void modbus_send(uint8_t* buffer, uint16_t len);
 
@@ -76,12 +87,8 @@ uint16_t modbus_quantity_of_registers();
 void modbus_char_received(uint8_t c);
 void modbus_package_ready();
 int8_t modbus_precheck();
-void modbus_update();
-uint8_t modbus_need_refresh_discrete_inputs();
-uint8_t modbus_need_update_configuration();
-uint8_t modbus_need_update_holding_registers();
-uint8_t modbus_need_update_coils();
 uint8_t modbus_need_update();
+void modbus_update();
 void modbus_set_id(uint8_t new_id);
 void modbus_set_coils_registers(uint16_t* registers, uint16_t count);
 void modbus_set_input_registers(uint16_t* registers, uint16_t count);
@@ -89,7 +96,11 @@ void modbus_set_discrete_inputs_registers(uint16_t* registers, uint16_t count);
 void modbus_set_holding_registers(uint16_t* registers, uint16_t count);
 void modbus_set_configuration_registers(uint16_t* registers, uint16_t count);
 void modbus_set_send_package_callback(modbus_frame_callback_t callback);
-
+void modbus_set_update_holding_registers_callback(update_callback_t callback);
+void modbus_set_update_input_registers_callback(update_callback_t callback);
+void modbus_set_update_input_discretes_callback(update_callback_t callback);
+void modbus_set_update_coils_callback(update_callback_t callback);
+void modbus_set_update_configuration_callback(update_callback_t callback);
 
 // private
 uint16_t modbus_crc16(uint8_t *buffer, uint16_t len);
