@@ -35,10 +35,12 @@ ISR(TCB0_INT_vect)
 // Initialize TCB0 timer to trigger compare interrupt after 'us' microseconds
 void init_tcb0_us(uint16_t us)
 {
-  if (us > 6553) us = 6553; // Limit to maximum value for 16-bit timer
+  uint32_t ticks = (uint32_t)us * 10; // Convert microseconds to timer ticks (assuming 10MHz timer clock)
+  // Limit to maximum value for 16-bit timer
+  if (ticks > 65535) ticks = 65535;
   TCB0.CTRLA = 0; // Stop timer
   TCB0.CNT = 0; // Reset timer count
-  TCB0.CCMP = (uint16_t)(us * 10); // Set compare value for desired microseconds
+  TCB0.CCMP = (uint16_t)(ticks); // Set compare value for desired microseconds
   TCB0.CTRLA = TCB_CLKSEL_DIV2_gc; // Use clock prescaler DIV2 (10MHz Timer clock@20Mhz systeme clock) and enable timer
   TCB0.INTCTRL = TCB_CAPT_bm; // Enable compare interrupt
   TCB0.INTFLAGS = TCB_CAPT_bm; /* Clear the interrupt flag */
