@@ -16,7 +16,8 @@ extern "C" {
 
 
 void init_uart0(uint32_t baudrate);
-uint16_t T3_5us(uint32_t baudrate);
+uint16_t T1_5us(uint32_t baudrate);
+void init_tca0_us(uint16_t us);
 void init_tcb0_us(uint16_t us);
 void uart_sendPacket(uint8_t* buffer , uint16_t len);
 #ifdef __cplusplus
