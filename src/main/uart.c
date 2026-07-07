@@ -34,6 +34,15 @@ void init_tcb0_us(uint16_t us)
   TCB0.INTFLAGS = TCB_CAPT_bm; /* Clear the interrupt flag */
 }
 
+// ISR for TCB0 compare
+ISR(TCB0_INT_vect)
+{
+  TCB0.INTFLAGS = TCB_CAPT_bm; /* Clear the interrupt flag */
+  TCB0.CTRLA &= ~TCB_ENABLE_bm; // Stop timer
+  TCB0.CNT = 0; // Reset timer count
+  modbus_package_ready();
+}
+
 void uart_sendPacket(uint8_t* buffer , uint16_t len)
 {   
     #if (UART_TX_ENABLE_PIN > 0)
@@ -57,16 +66,29 @@ void uart_sendPacket(uint8_t* buffer , uint16_t len)
     USART0.CTRLB |= USART_RXEN_bm; // Re-enable receiver
 }
 
-uint16_t T1_5us(uint32_t baudrate){
-  uint16_t T1_5 = 750; // default
-  uint8_t lowLatency = MODBUS_LOW_LATENCY_MODE;
-  if (lowLatency && baudrate >= 115200){
-      T1_5 = 75; // not defined in modbus standart
-  } else if (baudrate > 19200){
-      T1_5 = 750; // defined in modbus standart
-  } else{
-      T1_5 = 15000000/baudrate; // // defined in modbus standart 1.5T = 1T * 1.5
+uint16_t T3_5us(uint32_t baudrate){
+  uint16_t T3_5;
+  // LOW_LATENCY_MODE, allow lower than 1.75ms inter-frame gap
+  // congig.h: #define MODBUS_LOW_LATENCY_MODE 0  // 0 or 1
+  if (MODBUS_LOW_LATENCY_MODE){ 
+    // this is NOT standard compliant, but allows faster frame rates for high baud rates
+    T3_5 = 18000000/baudrate; 
+    if (T3_5 < 75) T3_5 = 75; // limit to 75us minimum
   }
+  else{
+    // this is standard compliant
+    T3_5 = 35000000/baudrate; 
+    // The inter-frame gap is limit 1.75 ms minimum (= 1750 us)
+    if (T3_5 < 1750) T3_5 = 1750;
+  }
+  return T3_5;
+}
+
+// T1_5us is not used in this implementation but it is provided for completeness. 
+// It calculates the inter-character timeout based on the baud rate, following the modbus specification. 
+uint16_t T1_5us(uint32_t baudrate){
+  uint16_t T1_5 = 15000000/baudrate; // // defined in modbus standard 1.5T = 1T * 1.5
   return T1_5;
 }
+
 

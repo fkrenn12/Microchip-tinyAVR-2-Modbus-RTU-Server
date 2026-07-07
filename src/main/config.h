@@ -8,10 +8,12 @@
                     // 1-247:   initial unique address until reprogrammed
 
 // *** Low latency mode ***
-// Low latency is not a defined modbus standard  feature.
+// !! This is not standard compliant !! But allows faster response time for high baud rates
 // Setting to 1 will enable the low latency mode and will decrease the modbus response time
-// from approx. 1ms to 0.2ms
-#define MODBUS_LOW_LATENCY_MODE 1  // 0 or 1
+// from approx. 1.75ms to 0.2ms
+// It can cause problems with some modbus masters, so it is disabled by default
+// The modbus master must be able to send without (or very low) inter-character gap, otherwise it will not work with this mode enabled
+#define MODBUS_LOW_LATENCY_MODE 0  // 0 or 1
 
 // *** Baudrate settings ***
 // Common settings: 9600 and 19200 bps
