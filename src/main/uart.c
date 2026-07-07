@@ -68,7 +68,7 @@ void uart_sendPacket(uint8_t* buffer , uint16_t len)
 }
 
 uint16_t T3_5us(uint32_t baudrate){
-  int16_t T3_5;
+  uint16_t T3_5;
   // LOW_LATENCY_MODE, allow lower than 1.75ms inter-frame gap
   // congig.h: #define MODBUS_LOW_LATENCY_MODE 0  // 0 or 1
   uint8_t lowLatency = MODBUS_LOW_LATENCY_MODE;
